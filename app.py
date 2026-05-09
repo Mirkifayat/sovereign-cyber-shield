@@ -6,10 +6,13 @@ import shutil
 import requests
 import socket
 import urllib3
-import warnings # <-- Bring in the sledgehammer
+import warnings 
 
 # Forcefully ignore the specific InsecureRequestWarning globally
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
+# --- ADD THIS LINE: Stop DNS lookups from freezing the server ---
+socket.setdefaulttimeout(3)
 
 app = Flask(__name__)
 def get_nmap_path():
