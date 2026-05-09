@@ -8,64 +8,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
-    <nav class="navbar">
-        <div class="nav-inner">
-            <div class="nav-brand">Sovereign <span>Cyber-Shield</span></div>
-            <a class="nav-cta" href="#" onclick="document.getElementById('target').focus(); return false;">Scan Now</a>
-        </div>
-    </nav>
-
+    <nav class="navbar"><div class="nav-inner"><div class="nav-brand">Sovereign <span>Cyber-Shield</span></div><a class="nav-cta" href="#">Scan Now</a></div></nav>
     <div class="lp-container">
         <section class="hero">
             <h1 class="hero-title">Know your <span style="color:#3fb950">cyber risk</span> in 60 seconds.</h1>
             <p class="hero-sub">Deep infrastructure intelligence to future-proof your digital business.</p>
             
             <div class="search-box-container">
-                <input type="text" id="target" placeholder="Enter your business domain (e.g., yourbusiness.com)" autocomplete="off">
+                <input type="text" id="target" placeholder="Enter business domain" autocomplete="off">
                 <button id="scan-btn" onclick="startScan()">🔍 Scan Now — It's Free</button>
             </div>
             
             <div id="loader" class="hidden loader-container">
                 <div class="spinner"></div>
-                <p id="loader-text">Initializing Deep Scan Engine...</p>
+                <p id="loader-text">Executing Multi-Threaded Scan...</p>
             </div>
 
             <div id="result-container" class="hidden dashboard">
                 
                 <div class="card score-card">
                     <h2>CYBER-RESILIENCE SCORE</h2>
-                    <div class="chart-container">
-                        <canvas id="scoreChart"></canvas>
-                        <div id="score-text" class="score-overlay">--</div>
-                    </div>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card">
-                        <h3>🦠 Deep File Exploits</h3>
-                        <ul id="exploit-output" class="feature-list"></ul>
-                    </div>
-                    <div class="card module-card">
-                        <h3>📡 Infra Intelligence</h3>
-                        <ul id="infra-output" class="feature-list"></ul>
-                    </div>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card">
-                        <h3>🌐 Web-Surface Exposures</h3>
-                        <ul id="web-output" class="feature-list"></ul>
-                    </div>
-                    <div class="card module-card">
-                        <h3>🛡️ Brand Protection</h3>
-                        <ul id="brand-output" class="feature-list"></ul>
-                    </div>
-                </div>
-
-                <div class="card geo-card" id="geo-card-container">
-                    <h3>📍 Server Geo-Intelligence</h3>
-                    <div class="geo-grid" id="geo-grid"></div>
+                    <div class="chart-container"><canvas id="scoreChart"></canvas><div id="score-text" class="score-overlay">--</div></div>
+                    <p id="score-message"></p>
                 </div>
 
                 <div class="card roadmap-card" id="roadmap-card-container">
@@ -74,8 +38,25 @@
                 </div>
 
                 <div class="modules">
+                    <div class="card module-card"><h3>🦠 Deep File Exploits</h3><ul id="exploit-output" class="feature-list"></ul></div>
+                    <div class="card module-card"><h3>📡 Infra Intelligence</h3><ul id="infra-output" class="feature-list"></ul></div>
+                </div>
+
+                <div class="modules">
+                    <div class="card module-card"><h3>🌐 Web-Surface Exposures</h3><ul id="web-output" class="feature-list"></ul></div>
+                    <div class="card module-card"><h3>🛡️ Brand Protection</h3><ul id="brand-output" class="feature-list"></ul></div>
+                </div>
+
+                <div class="card geo-card" id="geo-card-container"><h3>📍 Server Geo-Intelligence</h3><div class="geo-grid" id="geo-grid"></div></div>
+
+                <div class="modules">
                     <div class="card module-card"><h3>🔒 SSL Health</h3><ul id="ssl-output" class="feature-list"></ul></div>
                     <div class="card module-card"><h3>📧 DNS Security</h3><ul id="dns-output" class="feature-list"></ul></div>
+                </div>
+
+                <div class="modules">
+                    <div class="card module-card"><h3>🌍 Subdomains</h3><ul id="subdomain-output" class="feature-list"></ul></div>
+                    <div class="card module-card"><h3>📋 WHOIS Data</h3><ul id="whois-output" class="feature-list"></ul></div>
                 </div>
 
                 <div class="modules">
@@ -88,22 +69,15 @@
                     <div class="card module-card"><h3>🔗 Open Redirects</h3><ul id="redirect-output" class="feature-list"></ul></div>
                 </div>
 
-                <div class="card terminal-card">
-                    <h3>🖥️ Raw Infrastructure Data (Nmap)</h3>
-                    <pre id="output"></pre>
+                <div class="card module-card">
+                    <h3>🧱 HTTP Security Headers</h3>
+                    <ul id="header-output" class="feature-list"></ul>
                 </div>
 
+                <div class="card terminal-card"><h3>🖥️ Raw Infrastructure Data</h3><pre id="output"></pre></div>
             </div>
         </section>
     </div>
-
-    <footer class="site-footer">
-        <div class="lp-container">
-            <p class="footer-brand">Sovereign <span>Cyber-Shield</span></p>
-            <p class="footer-tagline">Enterprise-Grade Security for Kashmir's MSMEs</p>
-        </div>
-    </footer>
-
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
