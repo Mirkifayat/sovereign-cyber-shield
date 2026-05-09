@@ -107,7 +107,6 @@ async function startScan() {
     resultContainer.classList.add('hidden');
     cycleLoaderText();
 
-    // Clear previous lists
     const allOutputs = [
         'web-output', 'brand-output', 'ssl-output', 'dns-output',
         'subdomain-output', 'whois-output', 'header-output',
@@ -122,13 +121,27 @@ async function startScan() {
             body: JSON.stringify({ target })
         });
 
-        const data = await response.json();
+        // 🚨 NEW ERROR HANDLING LOGIC 🚨
+        const rawText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (parseErr) {
+            stopLoaderText();
+            loader.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            document.getElementById('output').textContent = "CRITICAL TIMEOUT: The cloud provider cut the connection because the target took too long to scan.\n\nTry a faster target like: scanme.nmap.org\n\nRaw Server Response:\n" + rawText.substring(0, 300);
+            btn.disabled = false;
+            return;
+        }
+
         stopLoaderText();
         loader.classList.add('hidden');
         resultContainer.classList.remove('hidden');
 
         if (!response.ok) {
             document.getElementById('output').textContent = `Error: ${data.error}\n${data.details || ''}`;
+            btn.disabled = false;
             return;
         }
 
@@ -178,7 +191,7 @@ async function startScan() {
     } catch (err) {
         stopLoaderText();
         loader.classList.add('hidden');
-        alert('Could not connect to the backend server. Is Flask running?');
+        alert('NETWORK ERROR: Please ensure you are testing on your live Render link and not from a local desktop file.');
     } finally { btn.disabled = false; }
 }
 
