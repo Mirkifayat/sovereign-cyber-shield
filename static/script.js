@@ -6,6 +6,7 @@ const loaderMessages = [
     "Running Nmap infrastructure scan...",
     "Detecting CMS fingerprint...",
     "Testing default credentials...",
+    "Checking for open redirects...",
     "Calculating risk score..."
 ];
 
@@ -32,7 +33,9 @@ function populateList(elementId, items) {
     const ul = document.getElementById(elementId);
     ul.innerHTML = '';
     if (!items || items.length === 0) {
-        ul.innerHTML = '<li>No data returned.</li>';
+        const li = document.createElement('li');
+        li.textContent = 'No data returned.';
+        ul.appendChild(li);
         return;
     }
     items.forEach(item => {
@@ -104,6 +107,14 @@ async function startScan() {
     resultContainer.classList.add('hidden');
     cycleLoaderText();
 
+    // Clear previous lists
+    const allOutputs = [
+        'web-output', 'brand-output', 'ssl-output', 'dns-output',
+        'subdomain-output', 'whois-output', 'header-output',
+        'cms-output', 'cve-output', 'cred-output', 'redirect-output', 'output'
+    ];
+    allOutputs.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+
     try {
         const response = await fetch('/scan', {
             method: 'POST',
@@ -117,7 +128,7 @@ async function startScan() {
         resultContainer.classList.remove('hidden');
 
         if (!response.ok) {
-            document.getElementById('output').textContent = `Error: ${data.error}`;
+            document.getElementById('output').textContent = `Error: ${data.error}\n${data.details || ''}`;
             return;
         }
 
@@ -127,10 +138,13 @@ async function startScan() {
         scoreCircle.className = 'score-overlay';
 
         let color = '#ff4a4a';
-        if (data.score >= 80) { color = '#3fb950'; scoreCircle.classList.add('high'); scoreMessage.textContent = 'Great! Your digital storefront is highly resilient.'; }
-        else if (data.score >= 50) { color = '#d29922'; scoreCircle.classList.add('medium'); scoreMessage.textContent = 'Warning: Multiple vulnerabilities found. Action required.'; }
-        else { scoreCircle.classList.add('low'); scoreMessage.textContent = 'Critical Danger: Business infrastructure is severely compromised.'; }
+        let statusClass = 'low';
+        
+        if (data.score >= 80) { color = '#3fb950'; statusClass = 'high'; scoreMessage.textContent = '✅ Excellent: Your digital storefront is highly resilient.'; scoreMessage.style.color = color; }
+        else if (data.score >= 50) { color = '#e3b341'; statusClass = 'medium'; scoreMessage.textContent = '⚠️ Warning: Multiple vulnerabilities found. Action required.'; scoreMessage.style.color = color; }
+        else { scoreMessage.textContent = '🚨 Critical Danger: Business infrastructure is severely compromised.'; scoreMessage.style.color = color; }
 
+        scoreCircle.className = `score-overlay ${statusClass}`;
         renderChart(data.score, color);
 
         populateList('web-output', data.web_surface);
@@ -148,7 +162,7 @@ async function startScan() {
         const roadmapCard = document.getElementById('roadmap-card');
         const roadmapList = document.getElementById('roadmap-list');
         roadmapList.innerHTML = '';
-        if (data.score < 100 && data.roadmap && data.roadmap.length > 0) {
+        if (data.roadmap && data.roadmap.length > 0) {
             roadmapCard.classList.remove('hidden');
             data.roadmap.forEach(item => {
                 const li = document.createElement('li');
@@ -164,7 +178,7 @@ async function startScan() {
     } catch (err) {
         stopLoaderText();
         loader.classList.add('hidden');
-        alert('Could not connect to the backend server.');
+        alert('Could not connect to the backend server. Is Flask running?');
     } finally { btn.disabled = false; }
 }
 
