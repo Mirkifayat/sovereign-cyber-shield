@@ -112,7 +112,7 @@ def scan():
 
         # 3. Run Nmap Infrastructure Check
         nmap_path = get_nmap_path()
-        command = [nmap_path, "-sT", "-F", "-Pn", "-sV", "-T4", "--max-retries", "1", target]
+        command = [nmap_path, "-sT", "-F", "-Pn", "-T5", "--max-retries", "1", target]
         result = subprocess.run(command, capture_output=True, text=True, timeout=150)
 
         if result.returncode != 0:
