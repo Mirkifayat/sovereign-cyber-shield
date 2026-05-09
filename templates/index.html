@@ -22,12 +22,7 @@
             background: radial-gradient(circle at top, #0d1726, var(--bg-color));
             color: var(--text-color);
             font-family: 'Inter', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 50px 20px;
-            min-height: 100vh;
-            margin: 0;
+            display: flex; flex-direction: column; align-items: center; padding: 50px 20px; min-height: 100vh; margin: 0;
         }
 
         .container { width: 100%; max-width: 900px; text-align: center; }
@@ -35,40 +30,19 @@
         header { margin-bottom: 40px; }
         h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
         h1 span { 
-            background: linear-gradient(90deg, #3B82F6, #10B981);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            color: transparent;
+            background: linear-gradient(90deg, #3B82F6, #10B981); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
         }
         header p { color: #8b949e; font-size: 1.1rem; }
 
         .search-box { display: flex; gap: 12px; margin-bottom: 40px; justify-content: center; }
         
         input {
-            flex: 0.7;
-            background: rgba(13, 23, 38, 0.6);
-            border: 1px solid rgba(88, 166, 255, 0.3);
-            border-radius: 12px;
-            color: white;
-            font-size: 1.1rem;
-            padding: 15px 20px;
-            outline: none;
-            transition: 0.3s;
+            flex: 0.7; background: rgba(13, 23, 38, 0.6); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 12px; color: white; font-size: 1.1rem; padding: 15px 20px; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--accent-color); box-shadow: 0 0 15px var(--accent-glow); }
 
         button {
-            background: linear-gradient(90deg, #2563EB, #3B82F6);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0 35px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px var(--accent-glow);
+            background: linear-gradient(90deg, #2563EB, #3B82F6); color: white; border: none; border-radius: 8px; padding: 0 35px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px var(--accent-glow);
         }
         button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -76,23 +50,14 @@
         .dashboard { display: flex; flex-direction: column; gap: 24px; text-align: left; }
         
         .card {
-            background: rgba(22, 27, 34, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: rgba(22, 27, 34, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 30px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .score-card { text-align: center; }
         .score-card h2 { font-size: 1.2rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
         
         .chart-container { position: relative; width: 200px; height: 200px; margin: 0 auto 20px auto; }
-        .score-overlay {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 42px; font-weight: bold; font-family: 'JetBrains Mono', monospace;
-        }
+        .score-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 42px; font-weight: bold; font-family: 'JetBrains Mono', monospace; }
         
         .high { color: var(--terminal-green); text-shadow: 0 0 20px rgba(63, 185, 80, 0.4); }
         .medium { color: var(--warning-yellow); text-shadow: 0 0 20px rgba(227, 179, 65, 0.4); }
@@ -104,18 +69,25 @@
         .module-card h3 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
         .module-card ul { list-style: none; padding: 0; }
         .module-card li {
-            padding: 12px 15px; margin-bottom: 10px; border-radius: 8px;
-            background: rgba(0,0,0,0.4); border-left: 4px solid transparent; font-size: 0.95rem;
+            padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; background: rgba(0,0,0,0.4); border-left: 4px solid transparent; font-size: 0.95rem;
         }
         
         .li-success { border-left-color: var(--terminal-green); color: #e6edf3; }
         .li-warning { border-left-color: var(--warning-yellow); color: #e6edf3; }
         .li-danger { border-left-color: var(--danger-red); color: #ff7b72; font-weight: bold; }
 
-        /* Server Intel Styling */
         .server-intel { display: flex; gap: 15px; flex-wrap: wrap; }
         .server-intel li { flex: 1; border-left: 4px solid var(--accent-color); }
         .intel-data { color: var(--accent-color); font-family: 'JetBrains Mono', monospace; font-weight: bold; display: block; margin-top: 5px;}
+
+        /* Action Plan Styling */
+        .action-item { background: rgba(0,0,0,0.5) !important; padding: 20px !important; margin-bottom: 15px !important; }
+        .action-issue { font-weight: bold; font-size: 1.05rem; margin-bottom: 8px; display: block; }
+        .action-solution { color: #c9d1d9; font-size: 0.95rem; line-height: 1.5; }
+        
+        .action-critical { border-left-color: var(--danger-red) !important; }
+        .action-warning { border-left-color: var(--warning-yellow) !important; }
+        .action-success { border-left-color: var(--terminal-green) !important; }
 
         .terminal-card { background: #010409; border: 1px solid rgba(63, 185, 80, 0.3); border-radius: 12px; padding: 20px; overflow-x: auto; }
         pre { color: var(--terminal-green); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
@@ -172,6 +144,11 @@
                         <li>Hosting Provider (ISP) <span id="server-isp" class="intel-data">--</span></li>
                     </ul>
                 </div>
+                
+                <div class="card module-card" style="grid-column: 1 / -1;">
+                    <h3>🛠️ Vulnerability Action Plan</h3>
+                    <ul id="action-output"></ul>
+                </div>
             </div>
 
             <div class="card terminal-card">
@@ -195,6 +172,7 @@
             const scoreMessage = document.getElementById('score-message');
             const webOutput = document.getElementById('web-output');
             const brandOutput = document.getElementById('brand-output');
+            const actionOutput = document.getElementById('action-output'); // NEW
 
             if (!target) { alert("Please enter a target domain!"); return; }
 
@@ -203,6 +181,7 @@
             resultContainer.classList.add('hidden');
             webOutput.innerHTML = '';
             brandOutput.innerHTML = '';
+            actionOutput.innerHTML = ''; // NEW
 
             try {
                 const response = await fetch('/scan', {
@@ -255,10 +234,33 @@
                         brandOutput.appendChild(li);
                     });
 
-                    // NEW FEATURE JS: INJECT SERVER DATA
                     document.getElementById('server-ip').textContent = data.server_data.ip;
                     document.getElementById('server-country').textContent = data.server_data.country;
                     document.getElementById('server-isp').textContent = data.server_data.isp;
+
+                    // NEW FEATURE JS: INJECT ACTION PLAN
+                    data.action_plan.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = "action-item";
+                        
+                        let itemColor = "";
+                        if (item.severity === "CRITICAL") {
+                            li.classList.add("action-critical");
+                            itemColor = "var(--danger-red)";
+                        } else if (item.severity === "WARNING" || item.severity === "HIGH RISK") {
+                            li.classList.add("action-warning");
+                            itemColor = "var(--warning-yellow)";
+                        } else {
+                            li.classList.add("action-success");
+                            itemColor = "var(--terminal-green)";
+                        }
+
+                        li.innerHTML = `
+                            <span class="action-issue" style="color: ${itemColor}">[${item.severity}] ${item.issue}</span>
+                            <span class="action-solution">💡 <strong>Remediation:</strong> ${item.solution}</span>
+                        `;
+                        actionOutput.appendChild(li);
+                    });
 
                     output.textContent = data.nmap_results;
 
