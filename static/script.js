@@ -28,7 +28,6 @@ function stopLoaderText() {
     }
 }
 
-// FORMATS TEXT TO LOOK EXACTLY LIKE YOUR SCREENSHOT
 function populateList(elementId, items) {
     const ul = document.getElementById(elementId);
     ul.innerHTML = '';
@@ -56,13 +55,13 @@ function populateList(elementId, items) {
             colorClass = 'text-danger'; borderClass = 'border-danger'; 
         } else if (item.includes('WARNING') || item.includes('DETECTED') || item.includes('FOUND')) { 
             colorClass = 'text-warning'; borderClass = 'border-warning'; 
-        } else if (item.includes('SUCCESS') || item.includes('SAFE')) { 
+        } else if (item.includes('SUCCESS') || item.includes('SAFE') || item.includes('INFO')) { 
             colorClass = 'text-info'; borderClass = 'border-info'; 
         }
 
         li.classList.add(borderClass);
         if (prefix) {
-            li.innerHTML = `<span class="${colorClass}" style="font-weight:bold;">${prefix}</span><span style="color:#e6edf3;">${rest}</span>`;
+            li.innerHTML = `<span class="${colorClass} font-bold">${prefix}</span>${rest}`;
         } else {
             li.innerHTML = `<span class="${colorClass}">${item}</span>`;
         }
@@ -83,19 +82,23 @@ function renderChart(score, colorCode) {
                 borderWidth: 0, cutout: '85%', borderRadius: 5
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true }, plugins: { tooltip: { enabled: false } } }
+        options: { 
+            responsive: true, maintainAspectRatio: false, animation: { animateScale: true }, plugins: { tooltip: { enabled: false } } 
+        }
     });
 }
 
 function renderGeo(geo) {
     const geoGrid = document.getElementById('geo-grid');
-    if (!geoGrid) return;
     if (!geo || geo.error) {
         geoGrid.innerHTML = `<div class="geo-box"><div class="geo-label">Status</div><div class="geo-value" style="color:#f85149;">${geo ? geo.error : "Lookup Failed"}</div></div>`;
         return;
     }
 
     const locationString = [geo.city, geo.country].filter(Boolean).join(', ') || 'Unknown';
+    let ispString = geo.isp || '—';
+    if (geo.is_hosting) ispString += ' (Datacenter)';
+    
     geoGrid.innerHTML = `
         <div class="geo-box">
             <div class="geo-label">Server IP Address</div>
@@ -105,20 +108,22 @@ function renderGeo(geo) {
             <div class="geo-label">Physical Location</div>
             <div class="geo-value">${locationString}</div>
         </div>
-        <div class="geo-box">
-            <div class="geo-label">Hosting Provider (ISP)</div>
-            <div class="geo-value">${geo.isp || '—'}</div>
-        </div>
     `;
 }
 
 async function startScan() {
-    const target = document.getElementById('target').value.trim();
+    const targetInput = document.getElementById('target');
+    const target = targetInput ? targetInput.value.trim() : '';
     const btn = document.getElementById('scan-btn');
     const loader = document.getElementById('loader');
     const resultContainer = document.getElementById('result-container');
 
-    if (!target) { alert('Please enter a domain to scan!'); return; }
+    // 🚨 BUG FIX 1: Stop empty submissions immediately
+    if (!target) { 
+        alert('Please enter a business domain to scan!'); 
+        if (targetInput) targetInput.focus();
+        return; 
+    }
 
     btn.disabled = true;
     loader.classList.remove('hidden');
@@ -134,14 +139,13 @@ async function startScan() {
 
         const rawText = await response.text();
         let data;
-        
         try {
             data = JSON.parse(rawText);
         } catch (parseErr) {
             stopLoaderText();
             loader.classList.add('hidden');
             resultContainer.classList.remove('hidden');
-            document.getElementById('output').textContent = "CRITICAL TIMEOUT: Scan blocked by hosting provider.\n\nTry testing with: scanme.nmap.org\n" + rawText.substring(0, 100);
+            document.getElementById('output').textContent = "CRITICAL TIMEOUT: Scan took too long.\n\nTry testing with: scanme.nmap.org";
             btn.disabled = false;
             return;
         }
@@ -151,7 +155,7 @@ async function startScan() {
         resultContainer.classList.remove('hidden');
 
         if (!response.ok) {
-            document.getElementById('output').textContent = `Error: ${data.error}`;
+            document.getElementById('output').textContent = `Error: ${data.error}\n${data.details || ''}`;
             btn.disabled = false;
             return;
         }
@@ -159,25 +163,23 @@ async function startScan() {
         const scoreCircle = document.getElementById('score-circle');
         const scoreMessage = document.getElementById('score-message');
         scoreCircle.textContent = `${data.score}`;
-        scoreCircle.className = 'score-overlay';
 
         let color = '#f85149';
         let statusIcon = '🚨';
         
         if (data.score >= 80) { 
-            color = '#3fb950'; statusIcon = '✅'; scoreCircle.classList.add('high-risk');
+            color = '#3fb950'; statusIcon = '✅'; scoreCircle.classList.add('high-risk'); scoreMessage.style.color = color;
             scoreMessage.innerHTML = `${statusIcon} Highly Resilient: Your digital storefront is well-protected.`; 
         }
         else if (data.score >= 50) { 
-            color = '#d29922'; statusIcon = '⚠️'; scoreCircle.classList.add('med-risk');
+            color = '#d29922'; statusIcon = '⚠️'; scoreCircle.classList.add('med-risk'); scoreMessage.style.color = color;
             scoreMessage.innerHTML = `${statusIcon} Warning: Multiple vulnerabilities found. Action required.`; 
         }
         else { 
-            scoreCircle.classList.add('high-risk');
+            scoreCircle.classList.add('high-risk'); scoreMessage.style.color = color;
             scoreMessage.innerHTML = `${statusIcon} Critical Danger: Business infrastructure is severely compromised.`; 
         }
 
-        scoreMessage.style.color = color;
         scoreCircle.style.color = color;
         renderChart(data.score, color);
 
@@ -195,29 +197,37 @@ async function startScan() {
 
         renderGeo(data.geo);
 
-        const roadmapCard = document.getElementById('roadmap-card');
+        const roadmapCard = document.getElementById('roadmap-card-container');
         const roadmapList = document.getElementById('roadmap-list');
-        if (roadmapList) {
-            roadmapList.innerHTML = '';
-            if (data.roadmap && data.roadmap.length > 0) {
-                roadmapCard.classList.remove('hidden');
-                data.roadmap.forEach(item => {
-                    const li = document.createElement('li');
-                    li.className = `action-item-card border-${item.label.toLowerCase()}`;
-                    
-                    let textColor = 'text-info';
-                    if (item.label === 'CRITICAL') textColor = 'text-danger';
-                    if (item.label === 'WARNING') textColor = 'text-warning';
+        roadmapList.innerHTML = '';
+        
+        if (data.roadmap && data.roadmap.length > 0) {
+            roadmapCard.classList.remove('hidden');
+            data.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `action-item-card border-${item.label.toLowerCase()}`;
+                
+                let textColor = 'text-info';
+                if (item.label === 'CRITICAL' || item.label === 'DANGER') textColor = 'text-danger';
+                if (item.label === 'WARNING' || item.label === 'HIGH') textColor = 'text-warning';
 
-                    li.innerHTML = `
-                        <div class="action-header ${textColor}">[${item.label}] ${item.finding}</div>
-                        <div class="action-remediation">💡 <strong>Remediation:</strong> Review security protocols to resolve this issue.</div>
-                    `;
-                    roadmapList.appendChild(li);
-                });
-            } else { 
-                roadmapCard.classList.add('hidden'); 
-            }
+                let issueText = item.finding;
+                let remediationText = "Review configuration settings to secure this vulnerability.";
+                
+                if (item.finding.includes('.')) {
+                    const parts = item.finding.split('.');
+                    issueText = parts[0] + '.';
+                    remediationText = parts.slice(1).join('.').trim() || remediationText;
+                }
+
+                li.innerHTML = `
+                    <div class="action-header ${textColor}">[${item.label}] ${issueText}</div>
+                    <div class="action-remediation">💡 <strong>Remediation:</strong> ${remediationText}</div>
+                `;
+                roadmapList.appendChild(li);
+            });
+        } else { 
+            roadmapCard.classList.add('hidden'); 
         }
 
         document.getElementById('output').textContent = data.nmap_results;
@@ -225,12 +235,19 @@ async function startScan() {
     } catch (err) {
         stopLoaderText();
         loader.classList.add('hidden');
-        alert('NETWORK ERROR: Connection to backend failed.');
+        alert('NETWORK ERROR: Could not reach the server.');
     } finally { btn.disabled = false; }
 }
 
+// 🚨 BUG FIX 2: Stop the "Enter" key from reloading the page
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('target').addEventListener('keydown', e => {
-        if (e.key === 'Enter') startScan();
-    });
+    const targetInput = document.getElementById('target');
+    if (targetInput) {
+        targetInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevents the traditional HTML form submission
+                startScan();
+            }
+        });
+    }
 });
