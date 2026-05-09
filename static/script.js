@@ -140,6 +140,27 @@ async function startScan() {
         populateList('cred-output',     data.default_creds);
         populateList('redirect-output', data.open_redirect);
 
+        // ── Roadmap to Recovery ──────────────────────────
+        const roadmapCard = document.getElementById('roadmap-card');
+        const roadmapList = document.getElementById('roadmap-list');
+        roadmapList.innerHTML = '';
+
+        if (data.score < 80 && data.roadmap && data.roadmap.length > 0) {
+            roadmapCard.classList.remove('hidden');
+            data.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `roadmap-item sev-${item.label.toLowerCase()}`;
+                li.innerHTML = `
+                    <span class="roadmap-badge">${item.label}</span>
+                    <span class="roadmap-module">[${item.module}]</span>
+                    <span class="roadmap-text">${item.finding}</span>
+                `;
+                roadmapList.appendChild(li);
+            });
+        } else {
+            roadmapCard.classList.add('hidden');
+        }
+
         // ── Geo location ─────────────────────────────────
         renderGeo(data.geo);
 
