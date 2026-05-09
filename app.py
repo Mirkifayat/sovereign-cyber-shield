@@ -446,35 +446,69 @@ def get_geo_location(target):
 
 
 # ──────────────────────────────────────────────
-# SCORE CALCULATION (UPDATED)
+# SCORE CALCULATION
+# Formula: RiskScore = Σ(Vulnerability × Severity) / TotalServicesChecked
+#
+# Severity scale:
+#   CRITICAL / DANGER  → 3  (highest risk)
+#   WARNING / DETECTED → 2  (moderate risk)
+#   FOUND (subdomain)  → 1  (low risk, informational)
+#   SUCCESS / SAFE / INFO → 0  (no risk, but counts toward total)
+#
+# RiskRatio = weighted_sum / (TotalChecks × 3)   [normalised 0–1]
+# ResilienceScore = round((1 - RiskRatio) × 100) [higher = safer]
 # ──────────────────────────────────────────────
+
+SEVERITY = {
+    'CRITICAL': 3,
+    'DANGER':   3,
+    'WARNING':  2,
+    'DETECTED': 2,
+    'FOUND':    1,   # subdomains / exposed paths
+    'SUCCESS':  0,
+    'SAFE':     0,
+    'INFO':     0,
+    'ERROR':    0,
+}
+
+def _item_severity(item: str) -> int:
+    """Return the highest matching severity for a finding string."""
+    item_upper = item.upper()
+    for keyword, weight in SEVERITY.items():
+        if keyword in item_upper:
+            return weight
+    return 0  # unknown → neutral
+
 
 def calculate_score(nmap_output, web_findings, typo_findings,
                     ssl_findings, dns_findings, header_findings,
                     cms_findings, cve_findings, cred_findings, redirect_findings):
-    score = 100
 
-    # Open ports
-    open_ports = len(re.findall(r"open", nmap_output, re.IGNORECASE))
-    score -= open_ports * 3
+    all_findings = (
+        web_findings + typo_findings + ssl_findings + dns_findings +
+        header_findings + cms_findings + cve_findings +
+        cred_findings + redirect_findings
+    )
 
-    for findings, weights in [
-        (web_findings,      {'CRITICAL': 25, 'WARNING': 8}),
-        (typo_findings,     {'DANGER': 12}),
-        (ssl_findings,      {'CRITICAL': 20, 'WARNING': 10}),
-        (dns_findings,      {'WARNING': 8}),
-        (header_findings,   {'WARNING': 3}),
-        (cms_findings,      {'DETECTED': 5}),
-        (cve_findings,      {'WARNING': 10}),
-        (cred_findings,     {'CRITICAL': 30, 'WARNING': 10}),
-        (redirect_findings, {'CRITICAL': 20}),
-    ]:
-        for item in findings:
-            for keyword, deduction in weights.items():
-                if keyword in item:
-                    score -= deduction
+    # Open ports each count as one WARNING-level check
+    open_ports = len(re.findall(r"\bopen\b", nmap_output, re.IGNORECASE))
+    for _ in range(open_ports):
+        all_findings.append("WARNING: open port detected")
 
-    return max(0, score)
+    total_checks = len(all_findings)
+    if total_checks == 0:
+        return 100  # nothing checked → assume clean
+
+    # Σ(Vulnerability × Severity)
+    weighted_sum = sum(_item_severity(item) for item in all_findings)
+
+    # Normalise: max possible = total_checks × 3 (all CRITICAL)
+    max_possible = total_checks * 3
+    risk_ratio   = weighted_sum / max_possible          # 0.0 – 1.0
+
+    # Resilience score (higher = safer)
+    resilience = round((1 - risk_ratio) * 100)
+    return max(0, min(100, resilience))
 
 
 # ──────────────────────────────────────────────
@@ -526,15 +560,42 @@ def scan():
         cred_findings     = check_default_credentials(target)
         redirect_findings = check_open_redirect(target)
 
-        # ── Final score ─────────────────────────
+        # ── Final score (formula-based) ──────────
         risk_score = calculate_score(
             nmap_output, web_findings, typo_findings,
             ssl_findings, dns_findings, header_findings,
             cms_findings, cve_findings, cred_findings, redirect_findings
         )
 
+        # ── Roadmap: collect all CRITICAL/WARNING items, sorted by severity ──
+        roadmap_sources = {
+            'SSL Certificate':       ssl_findings,
+            'DNS Security':          dns_findings,
+            'Web Surface':           web_findings,
+            'Brand Protection':      typo_findings,
+            'HTTP Headers':          header_findings,
+            'CMS Security':          cms_findings,
+            'CVE / Exploits':        cve_findings,
+            'Default Credentials':   cred_findings,
+            'Open Redirect':         redirect_findings,
+        }
+        roadmap = []
+        for module, findings in roadmap_sources.items():
+            for item in findings:
+                sev = _item_severity(item)
+                if sev > 0:
+                    roadmap.append({
+                        "module":   module,
+                        "finding":  item,
+                        "severity": sev,
+                        "label":    "CRITICAL" if sev == 3 else ("WARNING" if sev == 2 else "LOW"),
+                    })
+        # Sort: highest severity first
+        roadmap.sort(key=lambda x: x['severity'], reverse=True)
+
         return jsonify({
             "score":            risk_score,
+            "roadmap":          roadmap[:10],   # top 10 issues to fix
             "web_surface":      web_findings,
             "brand_protection": typo_findings,
             "ssl":              ssl_findings,
@@ -559,3 +620,4 @@ def scan():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
+    
