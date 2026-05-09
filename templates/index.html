@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Cyber-Shield | Kashmir</title>
+    <title>Sovereign Cyber-Shield | Future-Proofing Kashmir</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -18,28 +18,20 @@
 
     <section class="hero">
         <div class="lp-container">
-            <p class="lp-label">Made for Kashmir's businesses</p>
-            <h1 class="hero-title">Know your <span style="color: var(--terminal-green);">cyber risk</span> in seconds.</h1>
-            <p class="hero-sub">Free enterprise-grade security scan. No technical knowledge needed.</p>
+            <h1 class="hero-title">Protect your business.</h1>
+            <p class="hero-sub">Deep infrastructure intelligence to secure your digital storefront.</p>
             
-            <div class="search-box-pill">
-                <input type="text" id="target" placeholder="Enter your domain (e.g., yourbusiness.com)" autocomplete="off">
+            <div class="search-box-container">
+                <input type="text" id="target" placeholder="www.yourbusiness.com" autocomplete="off">
                 <button id="scan-btn" onclick="startScan()">Analyze Risk</button>
-            </div>
-            
-            <div class="trust-marks">
-                <span>✓ No signup required</span>
-                <span>✓ Results in 60 seconds</span>
-                <span>✓ 10 security checks</span>
             </div>
 
             <div id="loader" class="hidden loader-container">
                 <div class="spinner"></div>
-                <p id="loader-text">Initializing scanning engine...</p>
+                <p id="loader-text">Initializing Deep Scan Engine...</p>
             </div>
 
             <div id="result-container" class="hidden dashboard">
-                
                 <div class="card score-card">
                     <h2>CYBER-RESILIENCE SCORE</h2>
                     <div class="chart-container">
@@ -51,28 +43,28 @@
 
                 <div class="modules">
                     <div class="card module-card">
-                        <h3>🌐 Web-Surface Exposures</h3>
-                        <ul id="web-output" class="feature-list"></ul>
+                        <h3>🦠 Deep File Exploits</h3>
+                        <ul id="exploit-output" class="feature-list"></ul>
                     </div>
                     <div class="card module-card">
-                        <h3>🛡️ Brand Impersonation</h3>
-                        <ul id="brand-output" class="feature-list"></ul>
+                        <h3>📡 Infra Intelligence</h3>
+                        <ul id="infra-output" class="feature-list"></ul>
                     </div>
                 </div>
 
-                <div class="card geo-container">
+                <div class="modules">
+                    <div class="card module-card"><h3>🌐 Web-Surface Exposures</h3><ul id="web-output" class="feature-list"></ul></div>
+                    <div class="card module-card"><h3>🛡️ Brand Impersonation</h3><ul id="brand-output" class="feature-list"></ul></div>
+                </div>
+
+                <div class="card geo-card" id="geo-card-container">
                     <h3>📍 Server Geo-Intelligence</h3>
                     <div class="geo-grid" id="geo-grid"></div>
                 </div>
 
-                <div class="card roadmap-container hidden" id="roadmap-card">
+                <div class="card roadmap-card" id="roadmap-card-container">
                     <h3>🛠️ Vulnerability Action Plan</h3>
                     <ul id="roadmap-list" class="roadmap-list"></ul>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card"><h3>🔒 SSL / TLS</h3><ul id="ssl-output" class="feature-list"></ul></div>
-                    <div class="card module-card"><h3>📧 DNS Security</h3><ul id="dns-output" class="feature-list"></ul></div>
                 </div>
 
                 <div class="card terminal-card">
@@ -83,15 +75,12 @@
         </div>
     </section>
 
-    <section class="lp-section bg-alt">
+    <footer class="site-footer">
         <div class="lp-container">
-            <h2 class="lp-heading">MSMEs are the #1 target of cybercrime</h2>
-            <div class="stat-grid">
-                <div class="stat-card"><div class="stat-num">43%</div><div class="stat-label">of attacks target small firms</div></div>
-                <div class="stat-card"><div class="stat-num">₹6.5L</div><div class="stat-label">average local data breach cost</div></div>
-            </div>
+            <p class="footer-brand">Sovereign <span>Cyber-Shield</span></p>
+            <p class="footer-tagline">Enterprise-Grade Security for Kashmir's MSMEs</p>
         </div>
-    </section>
+    </footer>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
