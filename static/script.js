@@ -1,15 +1,39 @@
+let scoreChartInstance = null;
+
+function populateList(elementId, items) {
+    const ul = document.getElementById(elementId);
+    ul.innerHTML = '';
+    items.forEach(item => {
+        const li = document.createElement('li');
+        li.className = 'list-item-card';
+        if (item.includes('CRITICAL') || item.includes('DANGER')) li.classList.add('border-danger');
+        else if (item.includes('WARNING')) li.classList.add('border-warning');
+        li.textContent = item;
+        ul.appendChild(li);
+    });
+}
+
+function renderChart(score, colorCode) {
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    if (scoreChartInstance) scoreChartInstance.destroy();
+    scoreChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { datasets: [{ data: [score, 100 - score], backgroundColor: [colorCode, '#232931'], borderWidth: 0, cutout: '85%' }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true }, plugins: { tooltip: { enabled: false } } }
+    });
+}
+
 async function startScan() {
-    const targetInput = document.getElementById('target');
-    const target = targetInput.value.trim();
+    const target = document.getElementById('target').value.trim();
+    if (!target) { alert('Please enter a domain!'); return; }
+
     const btn = document.getElementById('scan-btn');
     const loader = document.getElementById('loader');
-    const resultContainer = document.getElementById('result-container');
-
-    if (!target) { alert('Please enter a business domain!'); return; }
+    const results = document.getElementById('result-container');
 
     btn.disabled = true;
     loader.classList.remove('hidden');
-    resultContainer.classList.add('hidden');
+    results.classList.add('hidden');
 
     try {
         const response = await fetch('/scan', {
@@ -18,78 +42,63 @@ async function startScan() {
             body: JSON.stringify({ target })
         });
 
-        if (!response.ok) throw new Error('Server limit hit');
         const data = await response.json();
-        
         loader.classList.add('hidden');
-        resultContainer.classList.remove('hidden');
 
-        // Update Score Text (Matches your Screenshot)
-        const scoreVal = document.getElementById('score-text');
-        if (scoreVal) scoreVal.textContent = data.score;
-
-        // Render Chart
-        if (typeof renderChart === "function") {
-            renderChart(data.score, data.score > 70 ? '#3fb950' : '#f85149');
+        if (!response.ok) {
+            alert('Scan Error: ' + (data.error || 'Check domain and try again.'));
+            btn.disabled = false;
+            return;
         }
 
-        // Populate Lists
-        const listMap = {
-            'web-output': data.web_surface,
-            'brand-output': data.brand_protection,
-            'ssl-output': data.ssl,
-            'dns-output': data.dns,
-            'subdomain-output': data.subdomains,
-            'whois-output': data.whois,
-            'header-output': data.http_headers,
-            'cms-output': data.cms,
-            'cve-output': data.cve,
-            'cred-output': data.default_creds,
-            'redirect-output': data.open_redirect
-        };
+        results.classList.remove('hidden');
+        
+        // Render Score
+        const color = data.score >= 80 ? '#3fb950' : (data.score >= 50 ? '#d29922' : '#f85149');
+        document.getElementById('score-text').textContent = data.score;
+        document.getElementById('score-text').style.color = color;
+        renderChart(data.score, color);
 
-        for (const [id, items] of Object.entries(listMap)) {
-            const el = document.getElementById(id);
-            if (el) el.innerHTML = items.map(i => `<li>${i}</li>`).join('');
-        }
+        // Populate Modules
+        populateList('web-output', data.web_surface);
+        populateList('brand-output', data.brand_protection);
+        populateList('ssl-output', data.ssl);
+        populateList('dns-output', data.dns);
 
-        // Update Geo Data
-        if (data.geo && !data.geo.error) {
-            document.getElementById('server-ip').textContent = data.geo.ip;
-            document.getElementById('server-country').textContent = data.geo.country;
-            document.getElementById('server-isp').textContent = data.geo.isp;
-        }
+        // Geo Intel
+        document.getElementById('geo-grid').innerHTML = `
+            <div class="geo-box">IP Address: ${data.geo.ip}</div>
+            <div class="geo-box">Location: ${data.geo.country}</div>
+        `;
 
-        // Update Roadmap / Action Plan (Matching Screenshot UI)
+        // Roadmap
         const roadmapList = document.getElementById('roadmap-list');
-        if (roadmapList) {
-            roadmapList.innerHTML = data.roadmap.map(item => `
-                <div class="action-item-card">
-                    <div class="action-header" style="color: ${item.label === 'CRITICAL' ? '#f85149' : '#d29922'}">
-                        [${item.label}] ${item.finding}
-                    </div>
-                    <div class="action-remediation">💡 <strong>Remediation:</strong> Secure your backend and restrict public access.</div>
-                </div>
-            `).join('');
+        roadmapList.innerHTML = '';
+        if (data.roadmap.length > 0) {
+            document.getElementById('roadmap-card-container').classList.remove('hidden');
+            data.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'action-item-card';
+                li.style.borderLeftColor = item.label === 'CRITICAL' ? '#f85149' : '#d29922';
+                li.innerHTML = `<strong>[${item.label}]</strong> ${item.finding}`;
+                roadmapList.appendChild(li);
+            });
         }
 
         document.getElementById('output').textContent = data.nmap_results;
 
     } catch (err) {
         loader.classList.add('hidden');
-        alert('BACKEND TIMEOUT: The scan is too deep for Render. Try a faster domain like nmap.org');
-    } finally { btn.disabled = false; }
+        alert('Network Error: Could not reach the server.');
+    } finally {
+        btn.disabled = false;
+    }
 }
 
-// STOP ENTER RELOAD
-document.addEventListener('DOMContentLoaded', () => {
-    const targetField = document.getElementById('target');
-    if (targetField) {
-        targetField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                startScan();
-            }
-        });
+// Prevent Enter key from refreshing page
+document.getElementById('target').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        startScan();
     }
 });
