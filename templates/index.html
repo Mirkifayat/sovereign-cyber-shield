@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Cyber-Shield | Future-Proofing Kashmir</title>
+    <title>Sovereign Cyber-Shield | Kashmir</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -18,24 +18,24 @@
 
     <section class="hero">
         <div class="lp-container">
-            <h1 class="hero-title">Know your <span style="color: var(--terminal-green);">cyber risk</span> in 60 seconds.</h1>
-            <p class="hero-sub">Free enterprise-grade security scan. No technical knowledge needed. Results you can act on immediately.</p>
+            <p class="lp-label">Made for Kashmir's businesses</p>
+            <h1 class="hero-title">Know your <span style="color: var(--terminal-green);">cyber risk</span> in seconds.</h1>
+            <p class="hero-sub">Free enterprise-grade security scan. No technical knowledge needed.</p>
             
-            <div class="search-box-container">
-                <input type="text" id="target" placeholder="Enter your business domain (e.g., yourbusiness.com)" autocomplete="off">
-                <button id="scan-btn" onclick="startScan()">🔍 Scan Now — It's Free</button>
+            <div class="search-box-pill">
+                <input type="text" id="target" placeholder="Enter your domain (e.g., yourbusiness.com)" autocomplete="off">
+                <button id="scan-btn" onclick="startScan()">Analyze Risk</button>
             </div>
             
             <div class="trust-marks">
                 <span>✓ No signup required</span>
                 <span>✓ Results in 60 seconds</span>
                 <span>✓ 10 security checks</span>
-                <span>✓ Built for MSMEs</span>
             </div>
 
             <div id="loader" class="hidden loader-container">
                 <div class="spinner"></div>
-                <p id="loader-text" class="loader-text">Initializing scanning engine...</p>
+                <p id="loader-text">Initializing scanning engine...</p>
             </div>
 
             <div id="result-container" class="hidden dashboard">
@@ -60,12 +60,12 @@
                     </div>
                 </div>
 
-                <div class="card geo-card" id="geo-card-container">
+                <div class="card geo-container">
                     <h3>📍 Server Geo-Intelligence</h3>
                     <div class="geo-grid" id="geo-grid"></div>
                 </div>
 
-                <div class="card roadmap-card hidden" id="roadmap-card-container">
+                <div class="card roadmap-container hidden" id="roadmap-card">
                     <h3>🛠️ Vulnerability Action Plan</h3>
                     <ul id="roadmap-list" class="roadmap-list"></ul>
                 </div>
@@ -83,12 +83,15 @@
         </div>
     </section>
 
-    <footer class="site-footer">
+    <section class="lp-section bg-alt">
         <div class="lp-container">
-            <p class="footer-brand">Sovereign <span>Cyber-Shield</span></p>
-            <p class="footer-tagline">Future-Proofing Kashmiri Businesses with Technology</p>
+            <h2 class="lp-heading">MSMEs are the #1 target of cybercrime</h2>
+            <div class="stat-grid">
+                <div class="stat-card"><div class="stat-num">43%</div><div class="stat-label">of attacks target small firms</div></div>
+                <div class="stat-card"><div class="stat-num">₹6.5L</div><div class="stat-label">average local data breach cost</div></div>
+            </div>
         </div>
-    </footer>
+    </section>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
