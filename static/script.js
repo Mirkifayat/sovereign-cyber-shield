@@ -1,10 +1,22 @@
 let scoreChartInstance = null;
-const loaderMessages = ["Executing Nmap Fast Scan...", "Probing Subdomains...", "Checking SSL/TLS Health...", "Querying WHOIS records...", "Testing Path Traversals...", "Analyzing HTTP Headers..."];
+const loaderMessages = [
+    "Executing Nmap Fast Scan...", 
+    "Probing Subdomains...", 
+    "Checking SSL/TLS Health...", 
+    "Querying WHOIS records...", 
+    "Testing Path Traversals...", 
+    "Analyzing HTTP Headers...",
+    "Compiling Intelligence..."
+];
 let loaderInterval = null;
 
 function cycleLoader() {
     let i = 0;
-    loaderInterval = setInterval(() => { document.getElementById('loader-text').textContent = loaderMessages[i++ % loaderMessages.length]; }, 2000);
+    document.getElementById('loader-text').textContent = loaderMessages[0];
+    loaderInterval = setInterval(() => { 
+        i++;
+        document.getElementById('loader-text').textContent = loaderMessages[i % loaderMessages.length]; 
+    }, 2000);
 }
 
 function renderChart(score, color) {
@@ -68,13 +80,18 @@ async function startScan() {
         document.getElementById('loader').classList.add('hidden');
         document.getElementById('result-container').classList.remove('hidden');
 
-        // Score
+        // Score logic
         document.getElementById('score-text').textContent = data.score;
         const color = data.score >= 80 ? '#3fb950' : (data.score >= 50 ? '#d29922' : '#f85149');
         document.getElementById('score-text').style.color = color;
         renderChart(data.score, color);
 
-        // Fill all 12 feature lists!
+        const msg = document.getElementById('score-message');
+        if(data.score >= 80) msg.innerHTML = `<span style="color:#3fb950">✅ Highly Resilient: Your digital storefront is well-protected.</span>`;
+        else if(data.score >= 50) msg.innerHTML = `<span style="color:#d29922">⚠️ Warning: Multiple vulnerabilities found. Action required.</span>`;
+        else msg.innerHTML = `<span style="color:#f85149">🚨 Critical Danger: Business infrastructure is severely compromised.</span>`;
+
+        // Fill ALL 12 Lists
         populateList('web-output', data.web_surface);
         populateList('exploit-output', data.file_exploits);
         populateList('infra-output', data.infra_intelligence);
@@ -89,7 +106,7 @@ async function startScan() {
         populateList('cred-output', data.default_creds);
         populateList('redirect-output', data.open_redirect);
 
-        // Geo
+        // Render Geo Data
         if(data.geo) {
             document.getElementById('geo-grid').innerHTML = `
                 <div class="geo-box"><div class="geo-label">Server IP Address</div><div class="geo-value">${data.geo.ip}</div></div>
@@ -98,7 +115,7 @@ async function startScan() {
             `;
         }
 
-        // Roadmap
+        // Render Roadmap Actions
         const roadmapList = document.getElementById('roadmap-list');
         roadmapList.innerHTML = '';
         if (data.roadmap) {
@@ -117,10 +134,11 @@ async function startScan() {
     } catch (e) {
         clearInterval(loaderInterval);
         document.getElementById('loader').classList.add('hidden');
-        alert('Network Error: The deep scan timed out. Try scanning scanme.nmap.org');
+        alert('Network Error: The deep scan timed out. The target may be blocking connections. Try scanning scanme.nmap.org');
     } finally { btn.disabled = false; }
 }
 
+// Ensure hitting Enter runs the scan
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('target').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); startScan(); }
