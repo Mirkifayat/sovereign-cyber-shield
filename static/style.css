@@ -274,6 +274,94 @@ li.severity-info {
     line-height: 1.5;
 }
 
+/* ── Roadmap to Recovery ───────────────────── */
+.roadmap-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--warning);
+    border-radius: 10px;
+    padding: 22px 24px;
+}
+
+.roadmap-header {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 16px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.roadmap-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.roadmap-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    counter-reset: roadmap-counter;
+}
+
+.roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    counter-increment: roadmap-counter;
+    position: relative;
+    padding-left: 42px;
+}
+
+.roadmap-item::before {
+    content: counter(roadmap-counter);
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    width: 18px;
+    text-align: right;
+}
+
+.roadmap-item.sev-critical { background: rgba(248,81,73,0.08); border-left: 3px solid var(--danger); }
+.roadmap-item.sev-warning  { background: rgba(210,153,34,0.08); border-left: 3px solid var(--warning); }
+.roadmap-item.sev-low      { background: rgba(88,166,255,0.06); border-left: 3px solid var(--info); }
+
+.roadmap-badge {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sev-critical .roadmap-badge { background: rgba(248,81,73,0.2);  color: var(--danger);  }
+.sev-warning  .roadmap-badge { background: rgba(210,153,34,0.2); color: var(--warning); }
+.sev-low      .roadmap-badge { background: rgba(88,166,255,0.15); color: var(--info);   }
+
+.roadmap-module {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.roadmap-text {
+    color: var(--text);
+    word-break: break-word;
+}
+
 /* ── Geo Location Card ─────────────────────── */
 .geo-card {
     display: flex;
