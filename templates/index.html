@@ -3,118 +3,491 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Cyber-Shield | Dashboard</title>
+    <title>Sovereign Cyber-Shield | Enterprise Security Intelligence for Kashmir's MSMEs</title>
+    <meta name="description" content="Free real-time cybersecurity scanner. Detect SQL injection, SSL issues, DNS vulnerabilities, exposed credentials, and 50+ threats in 60 seconds.">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
+    <!-- NAVBAR -->
     <nav class="navbar">
         <div class="nav-inner">
-            <div class="nav-brand">Sovereign <span>Cyber-Shield</span></div>
-            <a class="nav-cta" href="#" onclick="document.getElementById('target').focus(); return false;">Scan Now</a>
+            <div class="nav-brand">
+                <span class="brand-icon">⚔️</span>
+                Sovereign <span class="brand-accent">Cyber-Shield</span>
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#how-it-works" class="nav-link">How It Works</a>
+                <a href="#scan-section" class="nav-cta" onclick="document.getElementById('target').focus(); return false;">🔍 Free Scan</a>
+            </div>
         </div>
     </nav>
 
-    <div class="lp-container">
-        <section class="hero">
-            <h1 class="hero-title">Know your <span style="color:#3fb950">cyber risk</span> in 60 seconds.</h1>
-            <p class="hero-sub">Deep infrastructure intelligence to future-proof your digital business.</p>
-            
-            <div class="search-box-container">
-                <input type="text" id="target" placeholder="Enter your business domain (e.g., yourbusiness.com)" autocomplete="off">
-                <button id="scan-btn" onclick="startScan()">🔍 Scan Now — It's Free</button>
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="scan-section">
+        <div class="hero-bg-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Live Threat Intelligence Engine — Active
             </div>
-            
-            <div id="loader" class="hidden loader-container">
-                <div class="spinner"></div>
-                <p id="loader-text">Initializing Deep Scan Engine...</p>
+            <h1 class="hero-title">
+                Know your<br>
+                <span class="hero-accent">cyber exposure</span><br>
+                in 60 seconds.
+            </h1>
+            <p class="hero-sub">
+                Enterprise-grade security reconnaissance for Kashmir's MSMEs.<br>
+                50+ attack vectors. 13 scan modules. Zero cost. Instant results.
+            </p>
+
+            <div class="scan-box-wrapper">
+                <div class="scan-box">
+                    <div class="scan-icon">🌐</div>
+                    <input type="text" id="target" placeholder="yourbusiness.com" autocomplete="off" spellcheck="false">
+                    <button id="scan-btn" onclick="startScan()">
+                        <span class="btn-text">Scan Now — Free</span>
+                        <span class="btn-icon">→</span>
+                    </button>
+                </div>
+                <div class="scan-examples">
+                    Try: <span class="example-link" onclick="setTarget('scanme.nmap.org')">scanme.nmap.org</span> &nbsp;·&nbsp;
+                    <span class="example-link" onclick="setTarget('testphp.vulnweb.com')">testphp.vulnweb.com</span>
+                </div>
             </div>
 
-            <div id="result-container" class="hidden dashboard">
-                
+            <!-- LOADER -->
+            <div id="loader" class="hidden loader-section">
+                <div class="loader-radar">
+                    <div class="radar-ring r1"></div>
+                    <div class="radar-ring r2"></div>
+                    <div class="radar-ring r3"></div>
+                    <div class="radar-sweep"></div>
+                    <div class="radar-dot"></div>
+                </div>
+                <div class="loader-info">
+                    <p id="loader-text" class="loader-text">Initializing Scan Engine...</p>
+                    <div class="loader-modules">
+                        <span class="lm" id="lm1">Web Surface</span>
+                        <span class="lm" id="lm2">Exploits</span>
+                        <span class="lm" id="lm3">SSL/TLS</span>
+                        <span class="lm" id="lm4">DNS</span>
+                        <span class="lm" id="lm5">Nmap</span>
+                        <span class="lm" id="lm6">Subdomains</span>
+                        <span class="lm" id="lm7">Cookies</span>
+                        <span class="lm" id="lm8">Tech Stack</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RADAR HERO VISUAL -->
+        <div class="hero-radar-visual">
+            <div class="hr-ring hr-ring-1"></div>
+            <div class="hr-ring hr-ring-2"></div>
+            <div class="hr-ring hr-ring-3"></div>
+            <div class="hr-ring hr-ring-4"></div>
+            <div class="hr-sweep"></div>
+            <div class="hr-blip b1"></div>
+            <div class="hr-blip b2"></div>
+            <div class="hr-blip b3"></div>
+            <div class="hr-center"></div>
+            <div class="hr-crosshair-h"></div>
+            <div class="hr-crosshair-v"></div>
+            <div class="hr-label l1">THREAT SCAN</div>
+            <div class="hr-label l2">ACTIVE</div>
+        </div>
+    </section>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number" data-count="13">0</div>
+            <div class="stat-label">Scan Modules</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number" data-count="50">0</div>
+            <div class="stat-label">Attack Vectors Tested</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number" data-count="60">0</div>
+            <div class="stat-label">Seconds to Results</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Free, Always</div>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <section class="section how-section" id="how-it-works">
+        <div class="lp-container">
+            <div class="section-header">
+                <div class="section-tag">Process</div>
+                <h2 class="section-title">How it works</h2>
+                <p class="section-sub">Three steps between you and total cyber clarity.</p>
+            </div>
+            <div class="how-steps">
+                <div class="how-step">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">🌐</div>
+                    <h3 class="step-title">Enter Your Domain</h3>
+                    <p class="step-desc">Type your business domain — no registration, no credit card, no installation required. Works on any device.</p>
+                </div>
+                <div class="how-arrow">→</div>
+                <div class="how-step">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">⚡</div>
+                    <h3 class="step-title">AI Scans 50+ Vectors</h3>
+                    <p class="step-desc">Our engine simultaneously tests injection attacks, SSL health, DNS security, open ports, exposed credentials, and more using 13 parallel modules.</p>
+                </div>
+                <div class="how-arrow">→</div>
+                <div class="how-step">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">📊</div>
+                    <h3 class="step-title">Get Your Action Plan</h3>
+                    <p class="step-desc">Receive a scored risk report with color-coded findings and a prioritized remediation roadmap your team can act on immediately.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES GRID -->
+    <section class="section features-section" id="features">
+        <div class="lp-container">
+            <div class="section-header">
+                <div class="section-tag">Capabilities</div>
+                <h2 class="section-title">13 modules. One scan.</h2>
+                <p class="section-sub">Every module runs in parallel — no waiting, no blind spots.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="fc-icon">🦠</div>
+                    <h4 class="fc-title">Injection Attack Testing</h4>
+                    <p class="fc-desc">Live SQLi, XSS, and Path Traversal probes against your real endpoints. Simulates exactly what a hacker would try.</p>
+                    <div class="fc-tags"><span class="tag tag-red">SQLi</span><span class="tag tag-red">XSS</span><span class="tag tag-red">LFI</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🌐</div>
+                    <h4 class="fc-title">Web Surface & Cloud Leaks</h4>
+                    <p class="fc-desc">Scans for exposed .env files, AWS credentials, Git configs, Docker files, and database backups on your public server.</p>
+                    <div class="fc-tags"><span class="tag tag-red">.env</span><span class="tag tag-red">.git</span><span class="tag tag-amber">AWS Keys</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🔒</div>
+                    <h4 class="fc-title">SSL/TLS Certificate Analysis</h4>
+                    <p class="fc-desc">Checks certificate validity, expiry countdown, issuer authority, and TLS protocol version for cryptographic hygiene.</p>
+                    <div class="fc-tags"><span class="tag tag-green">TLS 1.3</span><span class="tag tag-amber">Expiry</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">📧</div>
+                    <h4 class="fc-title">DNS Security Suite</h4>
+                    <p class="fc-desc">Validates SPF, DMARC, and DKIM records to detect email spoofing and phishing vulnerabilities on your domain.</p>
+                    <div class="fc-tags"><span class="tag tag-amber">SPF</span><span class="tag tag-amber">DMARC</span><span class="tag tag-green">DKIM</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">📡</div>
+                    <h4 class="fc-title">Network Port Intelligence</h4>
+                    <p class="fc-desc">Nmap-powered scan detects exposed database, RDP, SMB, and FTP ports that ransomware actors actively exploit.</p>
+                    <div class="fc-tags"><span class="tag tag-red">RDP</span><span class="tag tag-red">SMB</span><span class="tag tag-red">MySQL</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">💀</div>
+                    <h4 class="fc-title">CVE Database Matching</h4>
+                    <p class="fc-desc">Compares detected service versions against known CVEs. Flags critical vulnerabilities like Apache Path Traversal (CVE-2021-41773).</p>
+                    <div class="fc-tags"><span class="tag tag-red">CVE</span><span class="tag tag-amber">Versions</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🍪</div>
+                    <h4 class="fc-title">Cookie Security Audit</h4>
+                    <p class="fc-desc">Inspects all session cookies for missing Secure, HttpOnly, and SameSite flags that enable session hijacking and CSRF attacks.</p>
+                    <div class="fc-tags"><span class="tag tag-amber">HttpOnly</span><span class="tag tag-amber">SameSite</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🧱</div>
+                    <h4 class="fc-title">HTTP Security Headers</h4>
+                    <p class="fc-desc">Tests 6 critical headers: HSTS, CSP, X-Frame-Options, Referrer-Policy, Permissions-Policy, and CORS configuration.</p>
+                    <div class="fc-tags"><span class="tag tag-amber">HSTS</span><span class="tag tag-amber">CSP</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🏗️</div>
+                    <h4 class="fc-title">Tech Stack Fingerprinting</h4>
+                    <p class="fc-desc">Identifies server software, frameworks (Laravel, Django, WordPress, Next.js), and version disclosures that aid attackers.</p>
+                    <div class="fc-tags"><span class="tag tag-blue">Server</span><span class="tag tag-blue">Framework</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🤖</div>
+                    <h4 class="fc-title">Robots.txt Intelligence</h4>
+                    <p class="fc-desc">Analyzes your robots.txt for sensitive path disclosures that act as a directory map for attackers and malicious crawlers.</p>
+                    <div class="fc-tags"><span class="tag tag-amber">Paths</span><span class="tag tag-blue">Admin</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🌍</div>
+                    <h4 class="fc-title">Subdomain Enumeration</h4>
+                    <p class="fc-desc">Probes 20+ common subdomains to find exposed development, staging, or admin environments that may be unpatched.</p>
+                    <div class="fc-tags"><span class="tag tag-red">Dev/Staging</span><span class="tag tag-blue">API</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">🛡️</div>
+                    <h4 class="fc-title">Brand & Domain Protection</h4>
+                    <p class="fc-desc">Scans global TLD registries for typosquatting lookalike domains that criminals register to impersonate your brand.</p>
+                    <div class="fc-tags"><span class="tag tag-amber">Lookalikes</span><span class="tag tag-blue">WHOIS</span></div>
+                </div>
+                <div class="feature-card">
+                    <div class="fc-icon">📍</div>
+                    <h4 class="fc-title">Geo & Infrastructure Intel</h4>
+                    <p class="fc-desc">Maps your server's physical location, ISP, ASN, and detects VPN or proxy masking on your hosting infrastructure.</p>
+                    <div class="fc-tags"><span class="tag tag-green">IP</span><span class="tag tag-blue">ASN</span><span class="tag tag-blue">ISP</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST SECTION -->
+    <section class="trust-section">
+        <div class="lp-container">
+            <div class="trust-grid">
+                <div class="trust-item">
+                    <div class="trust-icon">🔐</div>
+                    <h4>No Data Stored</h4>
+                    <p>Scan results are never logged or retained. Your domain data stays private.</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">🏔️</div>
+                    <h4>Built for Kashmir</h4>
+                    <p>Designed specifically for the unique challenges facing MSMEs in the Kashmir Valley.</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">⚡</div>
+                    <h4>Always Free</h4>
+                    <p>Enterprise-grade scanning with no paywalls, subscriptions, or hidden fees. Ever.</p>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">🎯</div>
+                    <h4>Actionable Results</h4>
+                    <p>Not just alerts — a prioritized fix plan with specific technical remediation steps.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         RESULTS DASHBOARD (hidden until scan)
+    ════════════════════════════════════════════ -->
+    <div class="lp-container">
+        <div id="result-container" class="hidden dashboard">
+
+            <!-- SCAN META BAR -->
+            <div class="scan-meta-bar">
+                <div class="scan-meta-item">
+                    <span class="meta-label">Target</span>
+                    <span class="meta-value" id="meta-target">—</span>
+                </div>
+                <div class="scan-meta-item">
+                    <span class="meta-label">Scan Completed</span>
+                    <span class="meta-value" id="meta-time">—</span>
+                </div>
+                <div class="scan-meta-actions">
+                    <button class="action-btn" onclick="printReport()">🖨️ Print Report</button>
+                    <button class="action-btn" onclick="downloadReport()">💾 Download JSON</button>
+                    <button class="action-btn" onclick="copyShareSummary()">📋 Copy Summary</button>
+                </div>
+            </div>
+
+            <!-- SCORE + SEVERITY SUMMARY -->
+            <div class="summary-row">
                 <div class="card score-card">
-                    <h2>CYBER-RESILIENCE SCORE</h2>
+                    <div class="score-label-top">CYBER-RESILIENCE SCORE</div>
                     <div class="chart-container">
                         <canvas id="scoreChart"></canvas>
                         <div id="score-text" class="score-overlay">--</div>
                     </div>
                     <p id="score-message"></p>
                 </div>
-
-                <div class="modules">
-                    <div class="card module-card">
-                        <h3>🦠 Deep File Exploits (SQLi/XSS)</h3>
-                        <ul id="exploit-output" class="feature-list"></ul>
+                <div class="severity-summary">
+                    <div class="sev-card sev-critical">
+                        <div class="sev-count" id="count-critical">0</div>
+                        <div class="sev-label">CRITICAL</div>
                     </div>
-                    <div class="card module-card">
-                        <h3>📡 Infra Intelligence</h3>
-                        <ul id="infra-output" class="feature-list"></ul>
+                    <div class="sev-card sev-high">
+                        <div class="sev-count" id="count-high">0</div>
+                        <div class="sev-label">HIGH</div>
+                    </div>
+                    <div class="sev-card sev-warning">
+                        <div class="sev-count" id="count-warning">0</div>
+                        <div class="sev-label">WARNING</div>
+                    </div>
+                    <div class="sev-card sev-safe">
+                        <div class="sev-count" id="count-safe">0</div>
+                        <div class="sev-label">SAFE</div>
+                    </div>
+                    <div class="severity-legend">
+                        <div class="legend-row"><span class="leg-dot red"></span> CRITICAL — Immediate action required</div>
+                        <div class="legend-row"><span class="leg-dot orange"></span> HIGH — Fix within 24 hours</div>
+                        <div class="legend-row"><span class="leg-dot amber"></span> WARNING — Address this week</div>
+                        <div class="legend-row"><span class="leg-dot green"></span> SUCCESS — No action needed</div>
                     </div>
                 </div>
+            </div>
 
-                <div class="modules">
-                    <div class="card module-card">
-                        <h3>🌐 Web-Surface & Cloud Leaks</h3>
-                        <ul id="web-output" class="feature-list"></ul>
-                    </div>
-                    <div class="card module-card">
-                        <h3>🛡️ Brand Protection</h3>
-                        <ul id="brand-output" class="feature-list"></ul>
-                    </div>
-                </div>
+            <!-- ROADMAP -->
+            <div class="card roadmap-card">
+                <h3>🛠️ Prioritized Vulnerability Action Plan</h3>
+                <ul id="roadmap-list" class="roadmap-list"></ul>
+            </div>
 
-                <div class="card geo-card" id="geo-card-container">
-                    <h3>📍 Server Geo-Intelligence</h3>
-                    <div class="geo-grid" id="geo-grid"></div>
-                </div>
-
-                <div class="card roadmap-card" id="roadmap-card-container">
-                    <h3>🛠️ Vulnerability Action Plan</h3>
-                    <ul id="roadmap-list" class="roadmap-list"></ul>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card"><h3>🔒 SSL Health</h3><ul id="ssl-output" class="feature-list"></ul></div>
-                    <div class="card module-card"><h3>📧 DNS Security</h3><ul id="dns-output" class="feature-list"></ul></div>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card"><h3>🏗️ CMS & App Stack</h3><ul id="cms-output" class="feature-list"></ul></div>
-                    <div class="card module-card"><h3>💀 CVE Database Match</h3><ul id="cve-output" class="feature-list"></ul></div>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card"><h3>🔑 Default Credentials</h3><ul id="cred-output" class="feature-list"></ul></div>
-                    <div class="card module-card"><h3>🔗 Open Redirects</h3><ul id="redirect-output" class="feature-list"></ul></div>
-                </div>
-
-                <div class="modules">
-                    <div class="card module-card"><h3>🌍 Subdomains</h3><ul id="subdomain-output" class="feature-list"></ul></div>
-                    <div class="card module-card"><h3>📋 WHOIS Data</h3><ul id="whois-output" class="feature-list"></ul></div>
-                </div>
-
+            <!-- ROW: EXPLOITS + INFRA -->
+            <div class="modules">
                 <div class="card module-card">
-                    <h3>🧱 HTTP Security Headers</h3>
-                    <ul id="header-output" class="feature-list"></ul>
+                    <h3>🦠 Injection Attack Results (SQLi / XSS / LFI)</h3>
+                    <ul id="exploit-output" class="feature-list"></ul>
                 </div>
+                <div class="card module-card">
+                    <h3>📡 Network Port Intelligence</h3>
+                    <ul id="infra-output" class="feature-list"></ul>
+                </div>
+            </div>
 
+            <!-- ROW: WEB SURFACE + BRAND -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>🌐 Web Surface & Cloud Leaks</h3>
+                    <ul id="web-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>🛡️ Brand & Domain Protection</h3>
+                    <ul id="brand-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: SSL + DNS -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>🔒 SSL / TLS Certificate Analysis</h3>
+                    <ul id="ssl-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>📧 DNS Security (SPF / DMARC / DKIM)</h3>
+                    <ul id="dns-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: COOKIES + TECH STACK -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>🍪 Cookie Security Audit</h3>
+                    <ul id="cookie-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>🏗️ Technology Stack Fingerprinting</h3>
+                    <ul id="tech-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: CMS + CVE -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>📱 CMS & Application Platform</h3>
+                    <ul id="cms-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>💀 CVE Database Match</h3>
+                    <ul id="cve-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: CREDENTIALS + REDIRECTS -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>🔑 Admin Panel Exposure</h3>
+                    <ul id="cred-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>🔗 Open Redirect Detection</h3>
+                    <ul id="redirect-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: SUBDOMAINS + ROBOTS -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>🌍 Subdomain Enumeration</h3>
+                    <ul id="subdomain-output" class="feature-list"></ul>
+                </div>
+                <div class="card module-card">
+                    <h3>🤖 Robots.txt Intelligence</h3>
+                    <ul id="robots-output" class="feature-list"></ul>
+                </div>
+            </div>
+
+            <!-- ROW: HEADERS (full width) -->
+            <div class="card module-card">
+                <h3>🧱 HTTP Security Headers Analysis</h3>
+                <ul id="header-output" class="feature-list"></ul>
+            </div>
+
+            <!-- GEO CARD -->
+            <div class="card geo-card">
+                <h3>📍 Server Geo-Intelligence</h3>
+                <div class="geo-grid" id="geo-grid"></div>
+            </div>
+
+            <!-- WHOIS + TERMINAL -->
+            <div class="modules">
+                <div class="card module-card">
+                    <h3>📋 WHOIS & Domain Registry</h3>
+                    <ul id="whois-output" class="feature-list"></ul>
+                </div>
                 <div class="card terminal-card">
-                    <h3>🖥️ Raw Infrastructure Data (Nmap)</h3>
+                    <h3>🖥️ Raw Nmap Output</h3>
                     <pre id="output"></pre>
                 </div>
-
             </div>
-        </section>
+
+        </div>
     </div>
 
+    <!-- FOOTER -->
     <footer class="site-footer">
         <div class="lp-container">
-            <p class="footer-brand">Sovereign <span>Cyber-Shield</span></p>
-            <p class="footer-tagline">Enterprise-Grade Security for Kashmir's MSMEs</p>
+            <div class="footer-inner">
+                <div>
+                    <p class="footer-brand">⚔️ Sovereign <span>Cyber-Shield</span></p>
+                    <p class="footer-tagline">Enterprise-Grade Security Intelligence for Kashmir's MSMEs</p>
+                    <p class="footer-note">Built with purpose. Scanning with precision. Free, forever.</p>
+                </div>
+                <div class="footer-modules-list">
+                    <p class="footer-col-title">Scan Modules</p>
+                    <p>SQLi · XSS · LFI · SSL/TLS</p>
+                    <p>DNS · WHOIS · Subdomains</p>
+                    <p>CVE · Cookies · Tech Stack</p>
+                    <p>Robots · Brand · Nmap</p>
+                </div>
+                <div>
+                    <p class="footer-col-title">Built for Kashmir</p>
+                    <p style="color:#8b949e; font-size:0.9rem; line-height:1.8">
+                        Empowering local businesses<br>
+                        with world-class security tools.<br>
+                        No cost. No compromise.
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Sovereign Cyber-Shield · All scans are performed ethically for educational and protective purposes.</p>
+            </div>
         </div>
     </footer>
 
+    <!-- Hidden data store for download/copy -->
+    <script id="scan-data-store" type="application/json"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
