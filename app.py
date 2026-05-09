@@ -7,168 +7,108 @@ import requests
 import socket
 import ssl
 import datetime
-import dns.resolver
-import whois
 import urllib3
-import warnings
+import warnings 
+import dns.resolver
 
-# Suppress insecure request warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+socket.setdefaulttimeout(3) # Strict timeout to prevent server hangs
 
 app = Flask(__name__)
-
-# Global timeout for all socket operations
-socket.setdefaulttimeout(3)
 
 def get_nmap_path():
     path = shutil.which("nmap")
     return path if path else "/usr/bin/nmap"
 
 def clean_domain(target):
-    return target.replace("http://", "").replace("https://", "").split("/")[0].strip()
+    return target.replace("http://", "").replace("https://", "").split("/")[0]
 
-# --- MODULE 1: WEB SURFACE ---
+# --- RECON MODULES ---
 def check_web_surface(target):
     findings = []
-    paths = ['/.env', '/.git/config', '/admin/', '/wp-config.php.bak']
+    paths = ['/.env', '/admin/', '/.git/config']
+    url = f"http://{clean_domain(target)}"
     for path in paths:
         try:
-            r = requests.get(f"http://{target}{path}", timeout=2, verify=False)
-            if r.status_code == 200: findings.append(f"CRITICAL: Exposed file at {path}")
-            elif r.status_code in [401, 403]: findings.append(f"WARNING: Protected panel at {path}")
+            r = requests.get(f"{url}{path}", timeout=2, verify=False)
+            if r.status_code == 200: findings.append(f"CRITICAL: Exposed file found at {path}")
+            elif r.status_code in [401, 403]: findings.append(f"WARNING: Protected admin panel detected at {path}")
         except: pass
-    return findings if findings else ["SUCCESS: No sensitive files exposed."]
+    if not findings: findings.append("SUCCESS: No common sensitive files exposed.")
+    return findings
 
-# --- MODULE 2: BRAND IMPERSONATION ---
 def check_typosquatting(domain):
+    domain = clean_domain(domain)
+    if '.' not in domain: return ["N/A: Invalid domain."]
     base, tld = domain.rsplit('.', 1)
-    typo = base.replace('i', '1') + f".{tld}" if 'i' in base else f"get-{domain}"
-    try:
-        dns.resolver.resolve(typo, 'A', lifetime=2)
-        return [f"DANGER: {typo} is registered! Impersonation risk."]
-    except: return ["SAFE: No lookalike domains detected."]
-
-# --- MODULE 3: SSL HEALTH ---
-def check_ssl(domain):
-    try:
-        ctx = ssl.create_default_context()
-        with ctx.wrap_socket(socket.socket(), server_hostname=domain) as s:
-            s.connect((domain, 443))
-            cert = s.getpeercert()
-            exp = datetime.datetime.strptime(cert['notAfter'], '%b %d %H:%M:%S %Y %Z')
-            days = (exp - datetime.datetime.utcnow()).days
-            if days < 0: return ["CRITICAL: SSL certificate EXPIRED!"]
-            return [f"SUCCESS: SSL valid for {days} more days."]
-    except: return ["WARNING: Port 443 closed or SSL invalid."]
-
-# --- MODULE 4: DNS SECURITY ---
-def check_dns(domain):
-    results = []
-    try:
-        ans = dns.resolver.resolve(domain, 'TXT', lifetime=2)
-        if any('v=spf1' in str(r) for r in ans): results.append("SUCCESS: SPF record found.")
-        else: results.append("WARNING: Missing SPF record.")
-    except: results.append("WARNING: DNS TXT records unavailable.")
-    return results
-
-# --- MODULE 5: SUBDOMAINS ---
-def check_subdomains(domain):
-    found = []
-    for sub in ['www', 'dev', 'api', 'test', 'staging']:
+    impersonations = []
+    typos = [base.replace('i', '1') + f".{tld}", base + f"s.{tld}"]
+    for typo in typos:
         try:
-            socket.gethostbyname(f"{sub}.{domain}")
-            found.append(f"FOUND: {sub}.{domain}")
-        except: pass
-    return found if found else ["INFO: No common subdomains discovered."]
+            dns.resolver.resolve(typo, 'A', lifetime=2)
+            impersonations.append(f"DANGER: {typo} is registered! Someone might be impersonating your brand.")
+        except:
+            impersonations.append(f"SAFE: {typo} is not registered.")
+    return impersonations
 
-# --- MODULE 6: WHOIS INFO ---
-def get_whois_info(domain):
+def get_geo_intel(domain):
     try:
-        w = whois.whois(domain)
-        return [f"INFO: Registrar — {w.registrar}", f"SUCCESS: Domain expires {w.expiration_date[0].year if isinstance(w.expiration_date, list) else w.expiration_date.year}"]
-    except: return ["INFO: WHOIS data protected/masked."]
+        ip = socket.gethostbyname(clean_domain(domain))
+        res = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,isp", timeout=2)
+        d = res.json()
+        return {"ip": ip, "country": d.get("country", "Unknown"), "isp": d.get("isp", "Unknown")}
+    except: return {"ip": "Unknown", "country": "Unknown", "isp": "Unknown"}
 
-# --- MODULE 7: HTTP HEADERS ---
-def check_headers(target):
-    try:
-        h = requests.get(f"http://{target}", timeout=3, verify=False).headers
-        res = []
-        if 'Strict-Transport-Security' not in h: res.append("WARNING: HSTS missing.")
-        if 'Content-Security-Policy' not in h: res.append("WARNING: CSP missing.")
-        return res if res else ["SUCCESS: Basic security headers found."]
-    except: return ["WARNING: Could not fetch headers."]
-
-# --- MODULE 8: CMS DETECTION ---
-def detect_cms(target):
-    try:
-        r = requests.get(f"http://{target}", timeout=3, verify=False).text.lower()
-        if 'wp-content' in r: return ["DETECTED: WordPress site."]
-        if 'drupal' in r: return ["DETECTED: Drupal site."]
-        return ["INFO: Custom or unidentified CMS."]
-    except: return ["INFO: CMS detection failed."]
-
-# --- MODULE 9: CREDENTIAL PROBE ---
-def check_creds(target):
-    try:
-        r = requests.get(f"http://{target}/admin", timeout=2, verify=False)
-        if r.status_code == 200 and 'password' in r.text.lower():
-            return ["WARNING: Public admin login page detected."]
-    except: pass
-    return ["SUCCESS: No obvious default login portals found."]
-
-# --- MODULE 10: GEO INTEL ---
-def get_geo(domain):
-    try:
-        ip = socket.gethostbyname(domain)
-        r = requests.get(f"http://ip-api.com/json/{ip}?fields=status,country,isp,hosting", timeout=3).json()
-        return {"ip": ip, "country": r.get("country", "Unknown"), "isp": r.get("isp", "Unknown"), "is_hosting": r.get("hosting", False)}
-    except: return {"error": "Geo-data unavailable."}
+# --- ACTION PLAN GENERATOR ---
+def generate_action_plan(nmap_output, web_surface, typos):
+    plan = []
+    ports = len(re.findall(r"open", nmap_output, re.IGNORECASE))
+    if ports > 0:
+        plan.append({"label": "WARNING", "issue": f"{ports} open network port(s) detected.", "solution": "Configure your firewall to block unauthorized access. Only leave essential ports open (e.g., Port 443 for HTTPS)."})
+    for w in web_surface:
+        if "CRITICAL" in w:
+            plan.append({"label": "CRITICAL", "issue": w.replace("CRITICAL: ", ""), "solution": "Immediately delete this file from your public web directory or restrict access using server configurations."})
+    for t in typos:
+        if "DANGER" in t:
+            plan.append({"label": "WARNING", "issue": "Brand Impersonation detected.", "solution": "Monitor this domain for phishing activity. Consider filing a UDRP dispute if it violates your trademark."})
+    return plan
 
 @app.route('/')
-def index(): return render_template('index.html')
+def index():
+    return render_template('index.html')
 
 @app.route('/scan', methods=['POST'])
 def scan():
-    target = clean_domain(request.json.get('target', ''))
-    if not target: return jsonify({"error": "Empty target"}), 400
+    raw_target = request.json.get('target', '').strip()
+    if not raw_target: return jsonify({"error": "Enter a domain first"}), 400
+    target = clean_domain(raw_target)
 
     try:
-        # EXECUTE ALL REAL SCANS
-        results = {
-            "web_surface": check_web_surface(target),
-            "brand_protection": check_typosquatting(target),
-            "ssl": check_ssl(target),
-            "dns": check_dns(target),
-            "subdomains": check_subdomains(target),
-            "whois": get_whois_info(target),
-            "http_headers": check_headers(target),
-            "cms": detect_cms(target),
-            "default_creds": check_creds(target),
-            "open_redirect": ["SUCCESS: Clean."],
-            "cve": ["SUCCESS: No CVEs found for common ports."],
-            "geo": get_geo(target)
-        }
-
-        # Optimized Infrastructure Scan
-        nmap_path = get_nmap_path()
-        cmd = [nmap_path, "-sT", "-Pn", "-T5", "--top-ports", "50", target]
-        nmap_out = subprocess.run(cmd, capture_output=True, text=True, timeout=25).stdout
-        results["nmap_results"] = nmap_out
-
-        # SCORING ENGINE
-        score = 100
-        roadmap = []
-        if "open" in nmap_out.lower():
-            score -= 15
-            roadmap.append({"label": "WARNING", "module": "Infrastructure", "finding": "Open ports found."})
-        if any("CRITICAL" in str(x) for x in results.values()):
-            score -= 30
-            roadmap.append({"label": "CRITICAL", "module": "Security", "finding": "Critical data exposure found."})
+        web_surface = check_web_surface(target)
+        typos = check_typosquatting(target)
+        geo = get_geo_intel(target)
         
-        results["score"] = max(0, score)
-        results["roadmap"] = roadmap if roadmap else [{"label": "LOW", "module": "Scan", "finding": "Maintain current security."}]
+        # Fast Nmap scan to prevent timeout
+        nmap_path = get_nmap_path()
+        cmd = [nmap_path, "-sT", "-Pn", "-T5", "--top-ports", "20", target]
+        nmap_res = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+        nmap_out = nmap_res.stdout
 
-        return jsonify(results)
+        score = 100
+        if "open" in nmap_out.lower(): score -= 20
+        if any("CRITICAL" in w for w in web_surface): score -= 30
+        score = max(0, score)
+
+        action_plan = generate_action_plan(nmap_out, web_surface, typos)
+
+        return jsonify({
+            "score": score,
+            "web_surface": web_surface,
+            "brand_protection": typos,
+            "geo": geo,
+            "action_plan": action_plan,
+            "nmap_results": nmap_out
+        })
     except Exception as e: return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
