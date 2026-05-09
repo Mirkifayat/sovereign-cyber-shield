@@ -3,8 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sovereign Cyber-Shield | Future-Proofing Kashmir</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Sovereign Cyber-Shield | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modern Dark Theme Variables */
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: #151A27;
+            --border-color: #2A3143;
+            --text-main: #E2E8F0;
+            --text-muted: #94A3B8;
+            --accent-blue: #3B82F6;
+            --accent-glow: rgba(59, 130, 246, 0.4);
+            --terminal-bg: #050505;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Header Styling */
+        header { text-align: center; margin-bottom: 40px; }
+        
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+       h1 span {
+    /* Cyber gradient effect */
+    background: linear-gradient(90deg, #3B82F6, #10B981);
+    -webkit-background-clip: text;
+    background-clip: text; /* Added standard property to clear the error */
+    -webkit-text-fill-color: transparent;
+    color: transparent; /* Added standard property to clear the error */
+}
+
+        header p { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* Modern Search Box */
+        .search-box {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 40px;
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            padding: 15px 20px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+        }
+
+        input::placeholder { color: #64748B; }
+
+        button {
+            background: linear-gradient(90deg, #2563EB, #3B82F6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 35px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7);
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .score-card { text-align: center; }
+        .score-card h2 { 
+            font-size: 1.2rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+        }
+        
+        .score {
+            font-size: 5.5rem;
+            font-weight: 800;
+            margin: 10px 0;
+            font-family: 'JetBrains Mono', monospace;
+            transition: color 0.5s ease;
+        }
+
+        /* Glowing Score Colors */
+        .score.high { color: var(--success); text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
+        .score.medium { color: var(--warning); text-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+        .score.low { color: var(--danger); text-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
+
+        .modules { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 24px; 
+        }
+        
+        @media (max-width: 768px) { .modules { grid-template-columns: 1fr; } }
+
+        .module-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .module-card ul { list-style: none; }
+        .module-card li {
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        /* Mac-style Terminal Window */
+        .terminal-card {
+            background: var(--terminal-bg);
+            padding-top: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #1A1A1A;
+            height: 30px;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background: #FF5F56; }
+        .dot.yellow { background: #FFBD2E; }
+        .dot.green { background: #27C93F; }
+
+        pre {
+            color: var(--success);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Loader Animation */
+        .loader-container { text-align: center; margin-top: 40px; }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -14,38 +223,135 @@
         </header>
 
         <div class="search-box">
-            <input type="text" id="target" placeholder="Enter Business Domain (e.g., yourbusiness.com)">
-            <button id="scan-btn" onclick="startScan()">Analyze Business Risk</button>
+            <input type="text" id="target" placeholder="Enter Business Domain (e.g., yourbusiness.com)" autocomplete="off">
+            <button id="scan-btn" onclick="startScan()">Analyze Risk</button>
         </div>
 
-        <div id="loader" class="hidden">
+        <div id="loader" class="hidden loader-container">
             <div class="spinner"></div>
-            <p>Running Threat Intelligence & Infrastructure Scan...</p>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">Running Threat Intelligence & Infrastructure Scan...</p>
         </div>
 
         <div id="result-container" class="hidden dashboard">
             
-            <div class="score-card">
+            <div class="card score-card">
                 <h2>Cyber-Resilience Score</h2>
                 <div id="score-circle" class="score">--</div>
-                <p id="score-message"></p>
+                <p id="score-message" style="color: var(--text-muted); font-weight: 600;"></p>
             </div>
 
             <div class="modules">
-                <div class="module-card">
+                <div class="card module-card">
                     <h3>🌐 Web-Surface Exposures</h3>
                     <ul id="web-output"></ul>
                 </div>
 
-                <div class="module-card">
-                    <h3>🛡️ Brand Impersonation (Typosquatting)</h3>
+                <div class="card module-card">
+                    <h3>🛡️ Brand Impersonation</h3>
                     <ul id="brand-output"></ul>
                 </div>
             </div>
 
-            <div class="terminal-card">
-                <h3>🖥️ Raw Infrastructure Data (For IT/Devs)</h3>
+            <div class="card terminal-card">
+                <div class="terminal-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
                 <pre id="output"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function startScan() {
+            const target = document.getElementById('target').value;
+            const btn = document.getElementById('scan-btn');
+            const loader = document.getElementById('loader');
+            const resultContainer = document.getElementById('result-container');
+            
+            const output = document.getElementById('output');
+            const scoreCircle = document.getElementById('score-circle');
+            const scoreMessage = document.getElementById('score-message');
+            const webOutput = document.getElementById('web-output');
+            const brandOutput = document.getElementById('brand-output');
+
+            if (!target) {
+                alert("Please enter a target domain!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.style.opacity = "0.7";
+            loader.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+            
+            webOutput.innerHTML = '';
+            brandOutput.innerHTML = '';
+            scoreCircle.className = "score"; // Reset classes
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: target })
+                });
+
+                const data = await response.json();
+
+                loader.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+
+                if (response.ok) {
+                    // Update Score
+                    scoreCircle.textContent = data.score;
+                    if (data.score >= 80) {
+                        scoreCircle.classList.add('high');
+                        scoreMessage.textContent = "Excellent. Your digital storefront is highly resilient.";
+                    } else if (data.score >= 50) {
+                        scoreCircle.classList.add('medium');
+                        scoreMessage.textContent = "Warning: Multiple vulnerabilities detected. Action required.";
+                    } else {
+                        scoreCircle.classList.add('low');
+                        scoreMessage.textContent = "Critical Danger: Business infrastructure is severely compromised.";
+                    }
+
+                    // Update Web Surface
+                    data.web_surface.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item;
+                        if(item.includes("CRITICAL")) li.style.borderLeft = "4px solid #EF4444";
+                        else if(item.includes("WARNING")) li.style.borderLeft = "4px solid #F59E0B";
+                        else if(item.includes("SUCCESS")) li.style.borderLeft = "4px solid #10B981";
+                        webOutput.appendChild(li);
+                    });
+
+                    // Update Brand Protection
+                    data.brand_protection.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item;
+                        if(item.includes("DANGER")) li.style.borderLeft = "4px solid #EF4444";
+                        else if(item.includes("SAFE")) li.style.borderLeft = "4px solid #10B981";
+                        brandOutput.appendChild(li);
+                    });
+
+                    // Update Terminal
+                    output.textContent = data.nmap_results;
+
+                } else {
+                    output.textContent = `Error: ${data.error}\n${data.details || ''}`;
+                }
+            } catch (error) {
+                alert("Could not connect to the backend server.");
+                loader.classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            }
+        }
+    </script>
+</body>
+</html>
             </div>
         </div>
     </div>
