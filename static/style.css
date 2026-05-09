@@ -411,3 +411,80 @@ body {
     color: #4a5568;
     line-height: 1.7;
 }
+/* ── INJECTED DASHBOARD UI FIXES ──────────────────────────── */
+
+/* Dashboard Layout */
+.dashboard { display: flex; flex-direction: column; gap: 24px; text-align: left; }
+.dashboard .card {
+    background: rgba(22, 27, 34, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Score Chart Styling */
+.score-card { text-align: center; }
+.score-card h2 { font-size: 1.2rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
+.chart-container { position: relative; width: 200px; height: 200px; margin: 0 auto 20px auto; }
+.score-overlay {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 42px; font-weight: bold; font-family: monospace;
+}
+.high { color: #3fb950; text-shadow: 0 0 20px rgba(63, 185, 80, 0.4); }
+.medium { color: #d29922; text-shadow: 0 0 20px rgba(210, 153, 34, 0.4); }
+.low { color: #f85149; text-shadow: 0 0 20px rgba(248, 81, 73, 0.4); }
+
+/* Modules & Lists */
+.modules { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 768px) { .modules { grid-template-columns: 1fr; } }
+.module-card h3 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+.module-card ul { list-style: none; padding: 0; }
+.module-card li {
+    padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; 
+    background: rgba(0,0,0,0.4); border-left: 4px solid transparent; font-size: 0.95rem;
+}
+
+/* List Status Colors */
+.li-success { border-left-color: #3fb950; color: #e6edf3; }
+.li-warning { border-left-color: #d29922; color: #e6edf3; }
+.li-danger { border-left-color: #f85149; color: #ff7b72; font-weight: bold; }
+
+/* Geo-Intel Styling */
+.server-intel { display: flex; gap: 15px; flex-wrap: wrap; }
+.server-intel li { flex: 1; border-left: 4px solid #58a6ff; }
+.intel-data { color: #58a6ff; font-family: monospace; font-weight: bold; display: block; margin-top: 5px; }
+
+/* Action Plan Styling */
+.action-item { background: rgba(0,0,0,0.5) !important; padding: 20px !important; margin-bottom: 15px !important; }
+.action-issue { font-weight: bold; font-size: 1.05rem; margin-bottom: 8px; display: block; }
+.action-solution { color: #c9d1d9; font-size: 0.95rem; line-height: 1.5; }
+.action-critical { border-left-color: #f85149 !important; }
+.action-warning { border-left-color: #d29922 !important; }
+.action-success { border-left-color: #3fb950 !important; }
+
+/* Terminal Override */
+.terminal-card { background: #010409; border: 1px solid rgba(63, 185, 80, 0.3); border-radius: 12px; padding: 20px; overflow-x: auto; }
+.terminal-card pre { color: #3fb950; font-family: monospace; font-size: 13px; }
+
+/* Search Box (Centered) */
+.search-box { display: flex; gap: 12px; margin-bottom: 40px; justify-content: center; }
+.search-box input {
+    flex: 0.7; background: rgba(13, 23, 38, 0.6); border: 1px solid rgba(88, 166, 255, 0.3); 
+    border-radius: 12px; color: white; font-size: 1.1rem; padding: 15px 20px; outline: none; transition: 0.3s;
+}
+.search-box input:focus { border-color: #58a6ff; box-shadow: 0 0 15px rgba(88, 166, 255, 0.5); }
+.search-box button {
+    background: linear-gradient(90deg, #1D9E75, #0F6E56); color: white; border: none; border-radius: 8px; 
+    padding: 0 35px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(29, 158, 117, 0.4);
+}
+.search-box button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29, 158, 117, 0.7); }
+.search-box button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Loader Fixes */
+.loader-container { text-align: center; margin-top: 40px; }
+.spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: #58a6ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none !important; }
