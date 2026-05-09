@@ -5,12 +5,8 @@ async function startScan() {
     const loader = document.getElementById('loader');
     const resultContainer = document.getElementById('result-container');
 
-    if (!target) {
-        alert('Please enter a business domain!');
-        return;
-    }
+    if (!target) { alert('Please enter a business domain!'); return; }
 
-    // UI Reset
     btn.disabled = true;
     loader.classList.remove('hidden');
     resultContainer.classList.add('hidden');
@@ -22,50 +18,78 @@ async function startScan() {
             body: JSON.stringify({ target })
         });
 
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error('Server limit hit');
         const data = await response.json();
         
-        // Hide loader, show results
         loader.classList.add('hidden');
         resultContainer.classList.remove('hidden');
 
-        // Update Score and Lists (Matches your Screenshot UI)
-        document.getElementById('score-text').textContent = data.score;
-        populateList('web-output', data.web_surface);
-        populateList('brand-output', data.brand_protection);
+        // Update Score Text (Matches your Screenshot)
+        const scoreVal = document.getElementById('score-text');
+        if (scoreVal) scoreVal.textContent = data.score;
+
+        // Render Chart
+        if (typeof renderChart === "function") {
+            renderChart(data.score, data.score > 70 ? '#3fb950' : '#f85149');
+        }
+
+        // Populate Lists
+        const listMap = {
+            'web-output': data.web_surface,
+            'brand-output': data.brand_protection,
+            'ssl-output': data.ssl,
+            'dns-output': data.dns,
+            'subdomain-output': data.subdomains,
+            'whois-output': data.whois,
+            'header-output': data.http_headers,
+            'cms-output': data.cms,
+            'cve-output': data.cve,
+            'cred-output': data.default_creds,
+            'redirect-output': data.open_redirect
+        };
+
+        for (const [id, items] of Object.entries(listMap)) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = items.map(i => `<li>${i}</li>`).join('');
+        }
+
+        // Update Geo Data
+        if (data.geo && !data.geo.error) {
+            document.getElementById('server-ip').textContent = data.geo.ip;
+            document.getElementById('server-country').textContent = data.geo.country;
+            document.getElementById('server-isp').textContent = data.geo.isp;
+        }
+
+        // Update Roadmap / Action Plan (Matching Screenshot UI)
+        const roadmapList = document.getElementById('roadmap-list');
+        if (roadmapList) {
+            roadmapList.innerHTML = data.roadmap.map(item => `
+                <div class="action-item-card">
+                    <div class="action-header" style="color: ${item.label === 'CRITICAL' ? '#f85149' : '#d29922'}">
+                        [${item.label}] ${item.finding}
+                    </div>
+                    <div class="action-remediation">💡 <strong>Remediation:</strong> Secure your backend and restrict public access.</div>
+                </div>
+            `).join('');
+        }
+
         document.getElementById('output').textContent = data.nmap_results;
-        
-        // Render Chart (If Chart.js is loaded)
-        if (typeof renderChart === "function") renderChart(data.score, data.score > 70 ? '#3fb950' : '#f85149');
 
     } catch (err) {
         loader.classList.add('hidden');
-        btn.disabled = false;
-        alert('BACKEND ERROR: The scan took too long or the server crashed. Try scanme.nmap.org for a faster test.');
-        console.error(err);
-    } finally {
-        btn.disabled = false;
-    }
+        alert('BACKEND TIMEOUT: The scan is too deep for Render. Try a faster domain like nmap.org');
+    } finally { btn.disabled = false; }
 }
 
-// STOP PAGE RELOAD ON ENTER KEY
+// STOP ENTER RELOAD
 document.addEventListener('DOMContentLoaded', () => {
     const targetField = document.getElementById('target');
     if (targetField) {
         targetField.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // This is the crucial line to stop reloads
+                e.preventDefault();
                 startScan();
             }
         });
     }
 });
-
-function populateList(id, items) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = items.map(i => `<li>${i}</li>`).join('');
-}
