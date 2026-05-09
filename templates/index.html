@@ -16,7 +16,6 @@
             --terminal-green: #3fb950;
             --danger-red: #ff4a4a;
             --warning-yellow: #e3b341;
-            --bg-card: #151A27;
         }
 
         body {
@@ -88,20 +87,11 @@
         .score-card { text-align: center; }
         .score-card h2 { font-size: 1.2rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
         
-        /* CHART CSS */
-        .chart-container {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 20px auto;
-        }
+        .chart-container { position: relative; width: 200px; height: 200px; margin: 0 auto 20px auto; }
         .score-overlay {
-            position: absolute;
-            top: 50%; left: 50%;
+            position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 42px;
-            font-weight: bold;
-            font-family: 'JetBrains Mono', monospace;
+            font-size: 42px; font-weight: bold; font-family: 'JetBrains Mono', monospace;
         }
         
         .high { color: var(--terminal-green); text-shadow: 0 0 20px rgba(63, 185, 80, 0.4); }
@@ -114,17 +104,18 @@
         .module-card h3 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
         .module-card ul { list-style: none; padding: 0; }
         .module-card li {
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.4);
-            border-left: 4px solid transparent;
-            font-size: 0.95rem;
+            padding: 12px 15px; margin-bottom: 10px; border-radius: 8px;
+            background: rgba(0,0,0,0.4); border-left: 4px solid transparent; font-size: 0.95rem;
         }
         
         .li-success { border-left-color: var(--terminal-green); color: #e6edf3; }
         .li-warning { border-left-color: var(--warning-yellow); color: #e6edf3; }
         .li-danger { border-left-color: var(--danger-red); color: #ff7b72; font-weight: bold; }
+
+        /* Server Intel Styling */
+        .server-intel { display: flex; gap: 15px; flex-wrap: wrap; }
+        .server-intel li { flex: 1; border-left: 4px solid var(--accent-color); }
+        .intel-data { color: var(--accent-color); font-family: 'JetBrains Mono', monospace; font-weight: bold; display: block; margin-top: 5px;}
 
         .terminal-card { background: #010409; border: 1px solid rgba(63, 185, 80, 0.3); border-radius: 12px; padding: 20px; overflow-x: auto; }
         pre { color: var(--terminal-green); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
@@ -172,6 +163,15 @@
                     <h3>🛡️ Brand Impersonation</h3>
                     <ul id="brand-output"></ul>
                 </div>
+                
+                <div class="card module-card" style="grid-column: 1 / -1;">
+                    <h3>📍 Server Geo-Intelligence</h3>
+                    <ul class="server-intel">
+                        <li>Server IP Address <span id="server-ip" class="intel-data">--</span></li>
+                        <li>Physical Location <span id="server-country" class="intel-data">--</span></li>
+                        <li>Hosting Provider (ISP) <span id="server-isp" class="intel-data">--</span></li>
+                    </ul>
+                </div>
             </div>
 
             <div class="card terminal-card">
@@ -196,10 +196,7 @@
             const webOutput = document.getElementById('web-output');
             const brandOutput = document.getElementById('brand-output');
 
-            if (!target) {
-                alert("Please enter a target domain!");
-                return;
-            }
+            if (!target) { alert("Please enter a target domain!"); return; }
 
             btn.disabled = true;
             loader.classList.remove('hidden');
@@ -224,13 +221,11 @@
                     let statusClass = 'low';
                     
                     if (data.score >= 80) {
-                        color = '#3fb950'; 
-                        statusClass = 'high';
+                        color = '#3fb950'; statusClass = 'high';
                         scoreMessage.textContent = "✅ Excellent: Your digital storefront is highly resilient.";
                         scoreMessage.style.color = color;
                     } else if (data.score >= 50) {
-                        color = '#e3b341'; 
-                        statusClass = 'medium';
+                        color = '#e3b341'; statusClass = 'medium';
                         scoreMessage.textContent = "⚠️ Warning: Multiple vulnerabilities found. Action required.";
                         scoreMessage.style.color = color;
                     } else {
@@ -241,7 +236,6 @@
                     scoreText.textContent = data.score;
                     scoreText.className = `score-overlay ${statusClass}`;
 
-                    // RENDER THE CHART
                     renderChart(data.score, color);
 
                     data.web_surface.forEach(item => {
@@ -261,6 +255,11 @@
                         brandOutput.appendChild(li);
                     });
 
+                    // NEW FEATURE JS: INJECT SERVER DATA
+                    document.getElementById('server-ip').textContent = data.server_data.ip;
+                    document.getElementById('server-country').textContent = data.server_data.country;
+                    document.getElementById('server-isp').textContent = data.server_data.isp;
+
                     output.textContent = data.nmap_results;
 
                 } else {
@@ -269,7 +268,6 @@
                 }
             } catch (error) {
                 alert("Could not connect to the scanning server. Please try again.");
-                console.error("Fetch Error:", error);
             } finally {
                 btn.disabled = false;
             }
@@ -277,11 +275,7 @@
 
         function renderChart(score, colorCode) {
             const ctx = document.getElementById('scoreChart').getContext('2d');
-            
-            if (scoreChartInstance) {
-                scoreChartInstance.destroy();
-            }
-
+            if (scoreChartInstance) scoreChartInstance.destroy();
             scoreChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -294,8 +288,7 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     animation: { animateScale: true, animateRotate: true },
                     plugins: { tooltip: { enabled: false } }
                 }
