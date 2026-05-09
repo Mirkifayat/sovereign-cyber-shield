@@ -1,135 +1,241 @@
-/* ── CSS Variables ─────────────────────────── */
-:root {
-    --bg:             #0d1117;
-    --card-bg:        #161b22;
-    --border:         #30363d;
-    --terminal-green: #3fb950;
-    --text:           #e6edf3;
-    --text-muted:     #8b949e;
-    --accent:         #58a6ff;
-    --danger:         #f85149;
-    --warning:        #d29922;
-    --success:        #3fb950;
-    --info:           #58a6ff;
-    --green-mid:      #1D9E75;
-    --green-dark:     #0F6E56;
-    --green-light:    #E1F5EE;
+const loaderMessages = [
+    "Checking SSL certificate...",
+    "Probing DNS security records...",
+    "Enumerating subdomains...",
+    "Scanning HTTP security headers...",
+    "Running Nmap infrastructure scan...",
+    "Detecting CMS fingerprint...",
+    "Looking up CVE database...",
+    "Testing default credentials...",
+    "Checking for open redirects...",
+    "Calculating risk score..."
+];
+
+let loaderInterval = null;
+
+function cycleLoaderText() {
+    let i = 0;
+    const el = document.getElementById('loader-text');
+    loaderInterval = setInterval(() => {
+        el.textContent = loaderMessages[i % loaderMessages.length];
+        i++;
+    }, 2200);
 }
 
-/* ── Reset & Base ──────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+function stopLoaderText() {
+    if (loaderInterval) {
+        clearInterval(loaderInterval);
+        loaderInterval = null;
+    }
+}
 
-body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; min-height: 100vh; }
-.lp-container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+/**
+ * Populate a <ul> element from an array of strings.
+ * Colors items based on severity keywords.
+ */
+function populateList(elementId, items) {
+    const ul = document.getElementById(elementId);
+    ul.innerHTML = '';
+    if (!items || items.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No data returned.';
+        ul.appendChild(li);
+        return;
+    }
+    items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
 
-/* ── Navbar ────────────────────────────────── */
-.navbar { position: sticky; top: 0; z-index: 100; background: rgba(13,17,23,0.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
-.nav-inner { height: 56px; display: flex; align-items: center; justify-content: space-between; }
-.nav-brand { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; }
-.nav-brand span { color: var(--terminal-green); }
-.nav-cta { background: var(--green-mid); color: #fff; text-decoration: none; padding: 7px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
-.nav-cta:hover { opacity: 0.85; }
+        if (item.includes('CRITICAL') || item.includes('DANGER'))
+            li.className = 'severity-critical';
+        else if (item.includes('WARNING') || item.includes('DETECTED') || item.includes('FOUND'))
+            li.className = 'severity-warning';
+        else if (item.includes('SUCCESS') || item.includes('SAFE'))
+            li.className = 'severity-success';
+        else
+            li.className = 'severity-info';
 
-/* ── LP Section ────────────────────────────── */
-.lp-section { padding: 72px 0; }
-.lp-section.bg-alt { background: #0a0e14; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.lp-label { font-size: 11px; font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 10px; }
-.lp-heading { font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 12px; letter-spacing: -0.5px; }
-.lp-sub { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 600px; margin-bottom: 36px; }
+        ul.appendChild(li);
+    });
+}
 
-/* ── Hero ──────────────────────────────────── */
-.hero { padding: 96px 0 80px; border-bottom: 1px solid var(--border); }
-.hero-title { font-size: 3rem; font-weight: 800; line-height: 1.18; letter-spacing: -1.5px; margin-bottom: 18px; }
-.hero-title span { color: var(--terminal-green); }
-.hero-sub { font-size: 17px; color: var(--text-muted); line-height: 1.7; max-width: 580px; margin-bottom: 28px; }
+async function startScan() {
+    const target = document.getElementById('target').value.trim();
+    const btn = document.getElementById('scan-btn');
+    const loader = document.getElementById('loader');
+    const resultContainer = document.getElementById('result-container');
 
-/* ── Stats / Features / Works / Footer ─────── */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-.stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 24px 20px; text-align: center; }
-.stat-num { font-size: 2.2rem; font-weight: 800; color: var(--terminal-green); letter-spacing: -1px; margin-bottom: 8px; }
-.stat-label { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    if (!target) {
+        alert('Please enter a domain to scan!');
+        return;
+    }
 
-.feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
-.feature-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 22px; transition: border-color 0.2s; }
-.feature-card:hover { border-color: var(--green-mid); }
-.feature-icon { font-size: 24px; margin-bottom: 12px; }
-.feature-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
-.feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    btn.disabled = true;
+    loader.classList.remove('hidden');
+    resultContainer.classList.add('hidden');
+    cycleLoaderText();
 
-.steps-list { display: flex; flex-direction: column; gap: 0; max-width: 680px; }
-.step-row { display: flex; gap: 20px; align-items: flex-start; padding: 24px 0; border-bottom: 1px solid var(--border); }
-.step-row:last-child { border-bottom: none; }
-.step-num { min-width: 36px; height: 36px; border-radius: 50%; background: var(--green-light); color: var(--green-dark); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
-.step-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-.step-desc { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
-.step-desc code { font-size: 12px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px; font-family: monospace; }
+    // Clear all outputs
+    const allOutputs = [
+        'web-output', 'brand-output', 'ssl-output', 'dns-output',
+        'subdomain-output', 'whois-output', 'header-output',
+        'cms-output', 'cve-output', 'cred-output', 'redirect-output', 'output'
+    ];
+    allOutputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
 
-.site-footer { background: #070b10; border-top: 1px solid var(--border); padding: 48px 0; text-align: center; }
-.footer-brand { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
-.footer-brand span { color: var(--terminal-green); }
-.footer-tagline { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
-.footer-note { font-size: 12px; color: #4a5568; line-height: 1.7; }
+    try {
+        const response = await fetch('/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target })
+        });
 
-/* ──────────────────────────────────────────── */
-/* --- DASHBOARD UI OVERHAUL (MATCHING PICS)--- */
-/* ──────────────────────────────────────────── */
+        const data = await response.json();
 
-/* Search Box */
-.search-box { display: flex; gap: 12px; max-width: 600px; margin: 0 auto 30px auto; justify-content: center; }
-.search-box input { flex: 1; background: #11161d; border: 1px solid var(--border); border-radius: 8px; color: white; font-size: 1.1rem; padding: 15px 20px; outline: none; }
-.search-box input:focus { border-color: var(--accent); }
-.search-box button { background: linear-gradient(90deg, #1D9E75, #0F6E56); color: white; border: none; border-radius: 8px; padding: 0 30px; font-weight: 600; font-size: 1rem; cursor: pointer; }
+        stopLoaderText();
+        loader.classList.add('hidden');
+        resultContainer.classList.remove('hidden');
 
-/* Loader */
-.loader-container { text-align: center; margin-bottom: 30px; }
-.spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
-.loader-text { font-size: 1.1rem; color: var(--accent); font-weight: bold; font-family: monospace; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.hidden { display: none !important; }
+        if (!response.ok) {
+            document.getElementById('output').textContent =
+                `Error: ${data.error}\n${data.details || ''}`;
+            return;
+        }
 
-/* Global Dashboard Layout */
-.dashboard { display: flex; flex-direction: column; gap: 20px; text-align: left; margin-top: 40px; }
-.card { background: #11161d; border: 1px solid #232931; border-radius: 12px; padding: 25px; }
-.card h3 { font-size: 1.1rem; margin-bottom: 18px; color: #e6edf3; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #232931; padding-bottom: 10px; }
+        // ── Score ────────────────────────────────────────
+        const scoreCircle = document.getElementById('score-circle');
+        const scoreMessage = document.getElementById('score-message');
 
-/* Score Card */
-.score-card { text-align: center; }
-.score-card h2 { font-size: 1rem; color: #8b949e; font-weight: bold; letter-spacing: 1.5px; margin-bottom: 20px; }
-.chart-container { position: relative; width: 180px; height: 180px; margin: 0 auto; }
-.score-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; font-weight: bold; font-family: 'Segoe UI', sans-serif; }
-#score-message { font-size: 1.1rem; font-weight: bold; margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        scoreCircle.textContent = `${data.score}/100`;
+        scoreCircle.className = 'score';
 
-/* Dynamic Colors */
-.text-danger, .high-risk { color: #f85149; }
-.text-warning, .med-risk { color: #d29922; }
-.text-success, .low-risk { color: #3fb950; }
-.text-info { color: #8b949e; }
+        if (data.score >= 80) {
+            scoreCircle.classList.add('high');
+            scoreMessage.textContent = 'Great! Your digital storefront is highly resilient.';
+        } else if (data.score >= 50) {
+            scoreCircle.classList.add('medium');
+            scoreMessage.textContent = 'Warning: Multiple vulnerabilities found. Action required.';
+        } else {
+            scoreCircle.classList.add('low');
+            scoreMessage.textContent = 'Critical Danger: Business infrastructure is severely compromised.';
+        }
 
-/* Grid Modules */
-.modules { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-@media (max-width: 768px) { .modules { grid-template-columns: 1fr; } .geo-grid { grid-template-columns: 1fr !important; } }
+        // ── Original features ────────────────────────────
+        populateList('web-output',   data.web_surface);
+        populateList('brand-output', data.brand_protection);
 
-/* List Items (Web-Surface, Brand, etc.) */
-.feature-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
-.list-item-card { background: #0a0e14; border: 1px solid #232931; padding: 15px; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; }
-.border-danger { border-left: 4px solid #f85149; }
-.border-warning { border-left: 4px solid #d29922; }
-.border-success { border-left: 4px solid #3fb950; }
-.border-info { border-left: 4px solid #30363d; }
+        // ── Scanning & Recon ─────────────────────────────
+        populateList('ssl-output',       data.ssl);
+        populateList('dns-output',       data.dns);
+        populateList('subdomain-output', data.subdomains);
+        populateList('whois-output',     data.whois);
+        populateList('header-output',    data.http_headers);
 
-/* Geo Intelligence Blocks */
-.geo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-.geo-box { background: #0a0e14; border: 1px solid #232931; border-left: 4px solid #58a6ff; padding: 15px; border-radius: 8px; }
-.geo-label { font-size: 0.85rem; color: #8b949e; margin-bottom: 5px; }
-.geo-value { font-size: 1.1rem; font-weight: bold; color: #58a6ff; font-family: monospace; }
+        // ── Vulnerability Detection ──────────────────────
+        populateList('cms-output',      data.cms);
+        populateList('cve-output',      data.cve);
+        populateList('cred-output',     data.default_creds);
+        populateList('redirect-output', data.open_redirect);
 
-/* Action Plan */
-.roadmap-list { list-style: none; display: flex; flex-direction: column; gap: 15px; }
-.action-item-card { background: #0a0e14; border: 1px solid #232931; padding: 20px; border-radius: 8px; }
-.action-header { font-size: 1.05rem; font-weight: bold; margin-bottom: 8px; }
-.action-remediation { font-size: 0.95rem; color: #c9d1d9; line-height: 1.6; }
+        // ── Roadmap to Recovery ──────────────────────────
+        const roadmapCard = document.getElementById('roadmap-card');
+        const roadmapList = document.getElementById('roadmap-list');
+        roadmapList.innerHTML = '';
 
-/* Terminal Output */
-.terminal-card { background: #0a0e14; border: 1px solid #232931; }
-.terminal-card h3 { border-bottom: none; margin-bottom: 0;}
-.terminal-card pre { color: #3fb950; font-family: monospace; font-size: 13px; margin-top: 15px; }
+        if (data.score < 80 && data.roadmap && data.roadmap.length > 0) {
+            roadmapCard.classList.remove('hidden');
+            data.roadmap.forEach(item => {
+                const li = document.createElement('li');
+                li.className = `roadmap-item sev-${item.label.toLowerCase()}`;
+                li.innerHTML = `
+                    <span class="roadmap-badge">${item.label}</span>
+                    <span class="roadmap-module">[${item.module}]</span>
+                    <span class="roadmap-text">${item.finding}</span>
+                `;
+                roadmapList.appendChild(li);
+            });
+        } else {
+            roadmapCard.classList.add('hidden');
+        }
+
+        // ── Geo location ─────────────────────────────────
+        renderGeo(data.geo);
+
+        // ── Raw Nmap ─────────────────────────────────────
+        document.getElementById('output').textContent = data.nmap_results;
+
+    } catch (err) {
+        stopLoaderText();
+        loader.classList.add('hidden');
+        alert('Could not connect to the backend server. Is Flask running?');
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Allow pressing Enter to trigger scan
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('target').addEventListener('keydown', e => {
+        if (e.key === 'Enter') startScan();
+    });
+});
+
+function renderGeo(geo) {
+    if (!geo) return;
+
+    const flagEl    = document.getElementById('geo-flag');
+    const titleEl   = document.getElementById('geo-title');
+    const locationEl= document.getElementById('geo-location');
+    const ipEl      = document.getElementById('geo-ip');
+    const ispEl     = document.getElementById('geo-isp');
+    const asnEl     = document.getElementById('geo-asn');
+    const tagsEl    = document.getElementById('geo-tags');
+    const mapLink   = document.getElementById('geo-map-link');
+
+    if (geo.error) {
+        locationEl.textContent = geo.error;
+        return;
+    }
+
+    // Country flag emoji from country code
+    const flag = geo.country_code
+        ? geo.country_code.toUpperCase().replace(/./g,
+            c => String.fromCodePoint(127397 + c.charCodeAt(0)))
+        : '🌐';
+
+    flagEl.textContent   = flag;
+    titleEl.textContent  = `Server Location — ${geo.country || 'Unknown'}`;
+    locationEl.textContent = [geo.city, geo.region, geo.country]
+        .filter(Boolean).join(', ');
+
+    ipEl.textContent  = `IP: ${geo.ip  || '—'}`;
+    ispEl.textContent = `ISP: ${geo.isp || '—'}`;
+    asnEl.textContent = `ASN: ${geo.asn || '—'}`;
+
+    // Risk tags
+    tagsEl.innerHTML = '';
+    if (geo.is_proxy)   addTag(tagsEl, '⚠️ Proxy/VPN Detected',  'tag-warn');
+    if (geo.is_hosting) addTag(tagsEl, '🖥️ Hosted on Datacenter', 'tag-info');
+    if (geo.is_mobile)  addTag(tagsEl, '📱 Mobile Network',        'tag-info');
+    if (!geo.is_proxy && !geo.is_hosting && !geo.is_mobile)
+        addTag(tagsEl, '✅ Residential / Clean IP', 'tag-ok');
+
+    // Map link
+    if (geo.lat && geo.lon) {
+        mapLink.href = `https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}&zoom=10`;
+        mapLink.style.display = 'inline-block';
+    } else {
+        mapLink.style.display = 'none';
+    }
+}
+
+function addTag(parent, text, cls) {
+    const span = document.createElement('span');
+    span.className = `geo-tag ${cls}`;
+    span.textContent = text;
+    parent.appendChild(span);
+}
