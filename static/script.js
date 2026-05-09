@@ -1,12 +1,12 @@
 let scoreChartInstance = null;
 const loaderMessages = [
-    "Executing Nmap Fast Scan...", 
-    "Probing Subdomains...", 
-    "Checking SSL/TLS Health...", 
+    "Simulating SQL Injection...", 
+    "Testing Cross-Site Scripting (XSS)...", 
+    "Hunting for exposed AWS Credentials...", 
+    "Checking SSL/TLS Expiration...", 
     "Querying WHOIS records...", 
-    "Testing Path Traversals...", 
-    "Analyzing HTTP Headers...",
-    "Compiling Intelligence..."
+    "Analyzing HTTP Security Headers...",
+    "Compiling Enterprise Intelligence..."
 ];
 let loaderInterval = null;
 
@@ -91,7 +91,7 @@ async function startScan() {
         else if(data.score >= 50) msg.innerHTML = `<span style="color:#d29922">⚠️ Warning: Multiple vulnerabilities found. Action required.</span>`;
         else msg.innerHTML = `<span style="color:#f85149">🚨 Critical Danger: Business infrastructure is severely compromised.</span>`;
 
-        // Fill ALL 12 Lists
+        // Fill ALL 12 Lists seamlessly
         populateList('web-output', data.web_surface);
         populateList('exploit-output', data.file_exploits);
         populateList('infra-output', data.infra_intelligence);
@@ -134,11 +134,10 @@ async function startScan() {
     } catch (e) {
         clearInterval(loaderInterval);
         document.getElementById('loader').classList.add('hidden');
-        alert('Network Error: The deep scan timed out. The target may be blocking connections. Try scanning scanme.nmap.org');
+        alert('Network Error: The deep scan timed out or host refused connections. Try scanning scanme.nmap.org');
     } finally { btn.disabled = false; }
 }
 
-// Ensure hitting Enter runs the scan
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('target').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); startScan(); }
