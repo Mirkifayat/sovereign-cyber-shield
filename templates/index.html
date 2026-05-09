@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Cyber-Shield | Future-Proofing Kashmir</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sovereign <span>Cyber-Shield</span></h1>
+            <p>Enterprise-Grade Security & Brand Protection for MSMEs</p>
+        </header>
+
+        <div class="search-box">
+            <input type="text" id="target" placeholder="Enter Business Domain (e.g., yourbusiness.com)">
+            <button id="scan-btn" onclick="startScan()">Analyze Business Risk</button>
+        </div>
+
+        <div id="loader" class="hidden">
+            <div class="spinner"></div>
+            <p>Running Threat Intelligence & Infrastructure Scan...</p>
+        </div>
+
+        <div id="result-container" class="hidden dashboard">
+            
+            <div class="score-card">
+                <h2>Cyber-Resilience Score</h2>
+                <div id="score-circle" class="score">--</div>
+                <p id="score-message"></p>
+            </div>
+
+            <div class="modules">
+                <div class="module-card">
+                    <h3>🌐 Web-Surface Exposures</h3>
+                    <ul id="web-output"></ul>
+                </div>
+
+                <div class="module-card">
+                    <h3>🛡️ Brand Impersonation (Typosquatting)</h3>
+                    <ul id="brand-output"></ul>
+                </div>
+            </div>
+
+            <div class="terminal-card">
+                <h3>🖥️ Raw Infrastructure Data (For IT/Devs)</h3>
+                <pre id="output"></pre>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
