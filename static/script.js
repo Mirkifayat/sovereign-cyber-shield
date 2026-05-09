@@ -5,13 +5,12 @@ const loaderMessages = [
     "Scanning HTTP security headers...",
     "Running Nmap infrastructure scan...",
     "Detecting CMS fingerprint...",
-    "Looking up CVE database...",
     "Testing default credentials...",
-    "Checking for open redirects...",
     "Calculating risk score..."
 ];
 
 let loaderInterval = null;
+let scoreChartInstance = null;
 
 function cycleLoaderText() {
     let i = 0;
@@ -29,34 +28,88 @@ function stopLoaderText() {
     }
 }
 
-/**
- * Populate a <ul> element from an array of strings.
- * Colors items based on severity keywords.
- */
+// FORMATS TEXT TO LOOK EXACTLY LIKE YOUR SCREENSHOT
 function populateList(elementId, items) {
     const ul = document.getElementById(elementId);
     ul.innerHTML = '';
     if (!items || items.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'No data returned.';
-        ul.appendChild(li);
+        ul.innerHTML = '<li class="list-item-card border-info"><span class="text-info">No data returned.</span></li>';
         return;
     }
+
     items.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = item;
+        li.className = 'list-item-card';
 
-        if (item.includes('CRITICAL') || item.includes('DANGER'))
-            li.className = 'severity-critical';
-        else if (item.includes('WARNING') || item.includes('DETECTED') || item.includes('FOUND'))
-            li.className = 'severity-warning';
-        else if (item.includes('SUCCESS') || item.includes('SAFE'))
-            li.className = 'severity-success';
-        else
-            li.className = 'severity-info';
+        let prefix = '';
+        let rest = item;
+        let colorClass = 'text-info';
+        let borderClass = 'border-info';
 
+        if (item.includes(':')) {
+            const parts = item.split(':');
+            prefix = parts[0] + ':';
+            rest = parts.slice(1).join(':');
+        }
+
+        if (item.includes('CRITICAL') || item.includes('DANGER')) { 
+            colorClass = 'text-danger'; borderClass = 'border-danger'; 
+        } else if (item.includes('WARNING') || item.includes('DETECTED') || item.includes('FOUND')) { 
+            colorClass = 'text-warning'; borderClass = 'border-warning'; 
+        } else if (item.includes('SUCCESS') || item.includes('SAFE')) { 
+            colorClass = 'text-info'; borderClass = 'border-info'; 
+        }
+
+        li.classList.add(borderClass);
+        if (prefix) {
+            li.innerHTML = `<span class="${colorClass}" style="font-weight:bold;">${prefix}</span><span style="color:#e6edf3;">${rest}</span>`;
+        } else {
+            li.innerHTML = `<span class="${colorClass}">${item}</span>`;
+        }
         ul.appendChild(li);
     });
+}
+
+function renderChart(score, colorCode) {
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    if (scoreChartInstance) scoreChartInstance.destroy();
+    
+    scoreChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [score, 100 - score],
+                backgroundColor: [colorCode, 'rgba(255, 255, 255, 0.05)'],
+                borderWidth: 0, cutout: '85%', borderRadius: 5
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true }, plugins: { tooltip: { enabled: false } } }
+    });
+}
+
+function renderGeo(geo) {
+    const geoGrid = document.getElementById('geo-grid');
+    if (!geoGrid) return;
+    if (!geo || geo.error) {
+        geoGrid.innerHTML = `<div class="geo-box"><div class="geo-label">Status</div><div class="geo-value" style="color:#f85149;">${geo ? geo.error : "Lookup Failed"}</div></div>`;
+        return;
+    }
+
+    const locationString = [geo.city, geo.country].filter(Boolean).join(', ') || 'Unknown';
+    geoGrid.innerHTML = `
+        <div class="geo-box">
+            <div class="geo-label">Server IP Address</div>
+            <div class="geo-value">${geo.ip || '—'}</div>
+        </div>
+        <div class="geo-box">
+            <div class="geo-label">Physical Location</div>
+            <div class="geo-value">${locationString}</div>
+        </div>
+        <div class="geo-box">
+            <div class="geo-label">Hosting Provider (ISP)</div>
+            <div class="geo-value">${geo.isp || '—'}</div>
+        </div>
+    `;
 }
 
 async function startScan() {
@@ -65,26 +118,12 @@ async function startScan() {
     const loader = document.getElementById('loader');
     const resultContainer = document.getElementById('result-container');
 
-    if (!target) {
-        alert('Please enter a domain to scan!');
-        return;
-    }
+    if (!target) { alert('Please enter a domain to scan!'); return; }
 
     btn.disabled = true;
     loader.classList.remove('hidden');
     resultContainer.classList.add('hidden');
     cycleLoaderText();
-
-    // Clear all outputs
-    const allOutputs = [
-        'web-output', 'brand-output', 'ssl-output', 'dns-output',
-        'subdomain-output', 'whois-output', 'header-output',
-        'cms-output', 'cve-output', 'cred-output', 'redirect-output', 'output'
-    ];
-    allOutputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = '';
-    });
 
     try {
         const response = await fetch('/scan', {
@@ -93,149 +132,105 @@ async function startScan() {
             body: JSON.stringify({ target })
         });
 
-        const data = await response.json();
+        const rawText = await response.text();
+        let data;
+        
+        try {
+            data = JSON.parse(rawText);
+        } catch (parseErr) {
+            stopLoaderText();
+            loader.classList.add('hidden');
+            resultContainer.classList.remove('hidden');
+            document.getElementById('output').textContent = "CRITICAL TIMEOUT: Scan blocked by hosting provider.\n\nTry testing with: scanme.nmap.org\n" + rawText.substring(0, 100);
+            btn.disabled = false;
+            return;
+        }
 
         stopLoaderText();
         loader.classList.add('hidden');
         resultContainer.classList.remove('hidden');
 
         if (!response.ok) {
-            document.getElementById('output').textContent =
-                `Error: ${data.error}\n${data.details || ''}`;
+            document.getElementById('output').textContent = `Error: ${data.error}`;
+            btn.disabled = false;
             return;
         }
 
-        // ── Score ────────────────────────────────────────
         const scoreCircle = document.getElementById('score-circle');
         const scoreMessage = document.getElementById('score-message');
+        scoreCircle.textContent = `${data.score}`;
+        scoreCircle.className = 'score-overlay';
 
-        scoreCircle.textContent = `${data.score}/100`;
-        scoreCircle.className = 'score';
-
-        if (data.score >= 80) {
-            scoreCircle.classList.add('high');
-            scoreMessage.textContent = 'Great! Your digital storefront is highly resilient.';
-        } else if (data.score >= 50) {
-            scoreCircle.classList.add('medium');
-            scoreMessage.textContent = 'Warning: Multiple vulnerabilities found. Action required.';
-        } else {
-            scoreCircle.classList.add('low');
-            scoreMessage.textContent = 'Critical Danger: Business infrastructure is severely compromised.';
+        let color = '#f85149';
+        let statusIcon = '🚨';
+        
+        if (data.score >= 80) { 
+            color = '#3fb950'; statusIcon = '✅'; scoreCircle.classList.add('high-risk');
+            scoreMessage.innerHTML = `${statusIcon} Highly Resilient: Your digital storefront is well-protected.`; 
+        }
+        else if (data.score >= 50) { 
+            color = '#d29922'; statusIcon = '⚠️'; scoreCircle.classList.add('med-risk');
+            scoreMessage.innerHTML = `${statusIcon} Warning: Multiple vulnerabilities found. Action required.`; 
+        }
+        else { 
+            scoreCircle.classList.add('high-risk');
+            scoreMessage.innerHTML = `${statusIcon} Critical Danger: Business infrastructure is severely compromised.`; 
         }
 
-        // ── Original features ────────────────────────────
-        populateList('web-output',   data.web_surface);
+        scoreMessage.style.color = color;
+        scoreCircle.style.color = color;
+        renderChart(data.score, color);
+
+        populateList('web-output', data.web_surface);
         populateList('brand-output', data.brand_protection);
-
-        // ── Scanning & Recon ─────────────────────────────
-        populateList('ssl-output',       data.ssl);
-        populateList('dns-output',       data.dns);
+        populateList('ssl-output', data.ssl);
+        populateList('dns-output', data.dns);
         populateList('subdomain-output', data.subdomains);
-        populateList('whois-output',     data.whois);
-        populateList('header-output',    data.http_headers);
-
-        // ── Vulnerability Detection ──────────────────────
-        populateList('cms-output',      data.cms);
-        populateList('cve-output',      data.cve);
-        populateList('cred-output',     data.default_creds);
+        populateList('whois-output', data.whois);
+        populateList('header-output', data.http_headers);
+        populateList('cms-output', data.cms);
+        populateList('cve-output', data.cve);
+        populateList('cred-output', data.default_creds);
         populateList('redirect-output', data.open_redirect);
 
-        // ── Roadmap to Recovery ──────────────────────────
-        const roadmapCard = document.getElementById('roadmap-card');
-        const roadmapList = document.getElementById('roadmap-list');
-        roadmapList.innerHTML = '';
-
-        if (data.score < 80 && data.roadmap && data.roadmap.length > 0) {
-            roadmapCard.classList.remove('hidden');
-            data.roadmap.forEach(item => {
-                const li = document.createElement('li');
-                li.className = `roadmap-item sev-${item.label.toLowerCase()}`;
-                li.innerHTML = `
-                    <span class="roadmap-badge">${item.label}</span>
-                    <span class="roadmap-module">[${item.module}]</span>
-                    <span class="roadmap-text">${item.finding}</span>
-                `;
-                roadmapList.appendChild(li);
-            });
-        } else {
-            roadmapCard.classList.add('hidden');
-        }
-
-        // ── Geo location ─────────────────────────────────
         renderGeo(data.geo);
 
-        // ── Raw Nmap ─────────────────────────────────────
+        const roadmapCard = document.getElementById('roadmap-card');
+        const roadmapList = document.getElementById('roadmap-list');
+        if (roadmapList) {
+            roadmapList.innerHTML = '';
+            if (data.roadmap && data.roadmap.length > 0) {
+                roadmapCard.classList.remove('hidden');
+                data.roadmap.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = `action-item-card border-${item.label.toLowerCase()}`;
+                    
+                    let textColor = 'text-info';
+                    if (item.label === 'CRITICAL') textColor = 'text-danger';
+                    if (item.label === 'WARNING') textColor = 'text-warning';
+
+                    li.innerHTML = `
+                        <div class="action-header ${textColor}">[${item.label}] ${item.finding}</div>
+                        <div class="action-remediation">💡 <strong>Remediation:</strong> Review security protocols to resolve this issue.</div>
+                    `;
+                    roadmapList.appendChild(li);
+                });
+            } else { 
+                roadmapCard.classList.add('hidden'); 
+            }
+        }
+
         document.getElementById('output').textContent = data.nmap_results;
 
     } catch (err) {
         stopLoaderText();
         loader.classList.add('hidden');
-        alert('Could not connect to the backend server. Is Flask running?');
-        console.error(err);
-    } finally {
-        btn.disabled = false;
-    }
+        alert('NETWORK ERROR: Connection to backend failed.');
+    } finally { btn.disabled = false; }
 }
 
-// Allow pressing Enter to trigger scan
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('target').addEventListener('keydown', e => {
         if (e.key === 'Enter') startScan();
     });
 });
-
-function renderGeo(geo) {
-    if (!geo) return;
-
-    const flagEl    = document.getElementById('geo-flag');
-    const titleEl   = document.getElementById('geo-title');
-    const locationEl= document.getElementById('geo-location');
-    const ipEl      = document.getElementById('geo-ip');
-    const ispEl     = document.getElementById('geo-isp');
-    const asnEl     = document.getElementById('geo-asn');
-    const tagsEl    = document.getElementById('geo-tags');
-    const mapLink   = document.getElementById('geo-map-link');
-
-    if (geo.error) {
-        locationEl.textContent = geo.error;
-        return;
-    }
-
-    // Country flag emoji from country code
-    const flag = geo.country_code
-        ? geo.country_code.toUpperCase().replace(/./g,
-            c => String.fromCodePoint(127397 + c.charCodeAt(0)))
-        : '🌐';
-
-    flagEl.textContent   = flag;
-    titleEl.textContent  = `Server Location — ${geo.country || 'Unknown'}`;
-    locationEl.textContent = [geo.city, geo.region, geo.country]
-        .filter(Boolean).join(', ');
-
-    ipEl.textContent  = `IP: ${geo.ip  || '—'}`;
-    ispEl.textContent = `ISP: ${geo.isp || '—'}`;
-    asnEl.textContent = `ASN: ${geo.asn || '—'}`;
-
-    // Risk tags
-    tagsEl.innerHTML = '';
-    if (geo.is_proxy)   addTag(tagsEl, '⚠️ Proxy/VPN Detected',  'tag-warn');
-    if (geo.is_hosting) addTag(tagsEl, '🖥️ Hosted on Datacenter', 'tag-info');
-    if (geo.is_mobile)  addTag(tagsEl, '📱 Mobile Network',        'tag-info');
-    if (!geo.is_proxy && !geo.is_hosting && !geo.is_mobile)
-        addTag(tagsEl, '✅ Residential / Clean IP', 'tag-ok');
-
-    // Map link
-    if (geo.lat && geo.lon) {
-        mapLink.href = `https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}&zoom=10`;
-        mapLink.style.display = 'inline-block';
-    } else {
-        mapLink.style.display = 'none';
-    }
-}
-
-function addTag(parent, text, cls) {
-    const span = document.createElement('span');
-    span.className = `geo-tag ${cls}`;
-    span.textContent = text;
-    parent.appendChild(span);
-}
