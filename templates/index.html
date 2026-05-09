@@ -5,86 +5,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sovereign Cyber-Shield | Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* Modern Dark Theme Variables */
         :root {
-            --bg-main: #0B0F19;
+            --bg-color: #050b14;
+            --accent-color: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.5);
+            --text-color: #c9d1d9;
+            --terminal-green: #3fb950;
+            --danger-red: #ff4a4a;
+            --warning-yellow: #e3b341;
             --bg-card: #151A27;
-            --border-color: #2A3143;
-            --text-main: #E2E8F0;
-            --text-muted: #94A3B8;
-            --accent-blue: #3B82F6;
-            --accent-glow: rgba(59, 130, 246, 0.4);
-            --terminal-bg: #050505;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            background: radial-gradient(circle at top, #0d1726, var(--bg-color));
+            color: var(--text-color);
             font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 50px 20px;
             min-height: 100vh;
+            margin: 0;
         }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-        }
+        .container { width: 100%; max-width: 900px; text-align: center; }
 
-        /* Header Styling */
-        header { text-align: center; margin-bottom: 40px; }
+        header { margin-bottom: 40px; }
+        h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
+        h1 span { 
+            background: linear-gradient(90deg, #3B82F6, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        header p { color: #8b949e; font-size: 1.1rem; }
+
+        .search-box { display: flex; gap: 12px; margin-bottom: 40px; justify-content: center; }
         
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 10px;
-        }
-
-       h1 span {
-    /* Cyber gradient effect */
-    background: linear-gradient(90deg, #3B82F6, #10B981);
-    -webkit-background-clip: text;
-    background-clip: text; /* Added standard property to clear the error */
-    -webkit-text-fill-color: transparent;
-    color: transparent; /* Added standard property to clear the error */
-}
-
-        header p { color: var(--text-muted); font-size: 1.1rem; }
-
-        /* Modern Search Box */
-        .search-box {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 40px;
-            background: var(--bg-card);
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
         input {
-            flex: 1;
-            background: transparent;
-            border: none;
+            flex: 0.7;
+            background: rgba(13, 23, 38, 0.6);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 12px;
             color: white;
             font-size: 1.1rem;
             padding: 15px 20px;
-            font-family: 'Inter', sans-serif;
             outline: none;
+            transition: 0.3s;
         }
-
-        input::placeholder { color: #64748B; }
+        input:focus { border-color: var(--accent-color); box-shadow: 0 0 15px var(--accent-glow); }
 
         button {
             background: linear-gradient(90deg, #2563EB, #3B82F6);
@@ -98,120 +71,67 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px var(--accent-glow);
         }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.7);
-        }
-
-        /* Dashboard Grid Layout */
-        .dashboard {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
+        .dashboard { display: flex; flex-direction: column; gap: 24px; text-align: left; }
+        
         .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+            background: rgba(22, 27, 34, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .score-card { text-align: center; }
-        .score-card h2 { 
-            font-size: 1.2rem; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px; 
-        }
+        .score-card h2 { font-size: 1.2rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; }
         
-        .score {
-            font-size: 5.5rem;
-            font-weight: 800;
-            margin: 10px 0;
+        /* CHART CSS */
+        .chart-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px auto;
+        }
+        .score-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px;
+            font-weight: bold;
             font-family: 'JetBrains Mono', monospace;
-            transition: color 0.5s ease;
-        }
-
-        /* Glowing Score Colors */
-        .score.high { color: var(--success); text-shadow: 0 0 30px rgba(16, 185, 129, 0.4); }
-        .score.medium { color: var(--warning); text-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
-        .score.low { color: var(--danger); text-shadow: 0 0 30px rgba(239, 68, 68, 0.4); }
-
-        .modules { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 24px; 
         }
         
+        .high { color: var(--terminal-green); text-shadow: 0 0 20px rgba(63, 185, 80, 0.4); }
+        .medium { color: var(--warning-yellow); text-shadow: 0 0 20px rgba(227, 179, 65, 0.4); }
+        .low { color: var(--danger-red); text-shadow: 0 0 20px rgba(255, 74, 74, 0.4); }
+
+        .modules { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         @media (max-width: 768px) { .modules { grid-template-columns: 1fr; } }
 
-        .module-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-
-        .module-card ul { list-style: none; }
+        .module-card h3 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+        .module-card ul { list-style: none; padding: 0; }
         .module-card li {
             padding: 12px 15px;
-            background: rgba(255,255,255,0.03);
-            border-radius: 6px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.4);
+            border-left: 4px solid transparent;
             font-size: 0.95rem;
-            line-height: 1.4;
         }
-
-        /* Mac-style Terminal Window */
-        .terminal-card {
-            background: var(--terminal-bg);
-            padding-top: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .terminal-header {
-            background: #1A1A1A;
-            height: 30px;
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            gap: 8px;
-            border-bottom: 1px solid #333;
-        }
-
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot.red { background: #FF5F56; }
-        .dot.yellow { background: #FFBD2E; }
-        .dot.green { background: #27C93F; }
-
-        pre {
-            color: var(--success);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        /* Loader Animation */
-        .loader-container { text-align: center; margin-top: 40px; }
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top-color: var(--accent-blue);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
         
+        .li-success { border-left-color: var(--terminal-green); color: #e6edf3; }
+        .li-warning { border-left-color: var(--warning-yellow); color: #e6edf3; }
+        .li-danger { border-left-color: var(--danger-red); color: #ff7b72; font-weight: bold; }
+
+        .terminal-card { background: #010409; border: 1px solid rgba(63, 185, 80, 0.3); border-radius: 12px; padding: 20px; overflow-x: auto; }
+        pre { color: var(--terminal-green); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        
+        .loader-container { text-align: center; margin-top: 40px; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -223,21 +143,24 @@
         </header>
 
         <div class="search-box">
-            <input type="text" id="target" placeholder="Enter Business Domain (e.g., yourbusiness.com)" autocomplete="off">
+            <input type="text" id="target" placeholder="Enter Business Domain (e.g., scanme.nmap.org)" autocomplete="off">
             <button id="scan-btn" onclick="startScan()">Analyze Risk</button>
         </div>
 
         <div id="loader" class="hidden loader-container">
             <div class="spinner"></div>
-            <p style="color: var(--text-muted); font-size: 1.1rem;">Running Threat Intelligence & Infrastructure Scan...</p>
+            <p style="color: #8b949e; font-size: 1.1rem;">Running Threat Intelligence & Infrastructure Scan...</p>
         </div>
 
         <div id="result-container" class="hidden dashboard">
             
             <div class="card score-card">
                 <h2>Cyber-Resilience Score</h2>
-                <div id="score-circle" class="score">--</div>
-                <p id="score-message" style="color: var(--text-muted); font-weight: 600;"></p>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                    <div id="score-text" class="score-overlay">--</div>
+                </div>
+                <p id="score-message" style="margin-top: 15px; font-weight: 600;"></p>
             </div>
 
             <div class="modules">
@@ -245,7 +168,6 @@
                     <h3>🌐 Web-Surface Exposures</h3>
                     <ul id="web-output"></ul>
                 </div>
-
                 <div class="card module-card">
                     <h3>🛡️ Brand Impersonation</h3>
                     <ul id="brand-output"></ul>
@@ -253,17 +175,15 @@
             </div>
 
             <div class="card terminal-card">
-                <div class="terminal-header">
-                    <div class="dot red"></div>
-                    <div class="dot yellow"></div>
-                    <div class="dot green"></div>
-                </div>
+                <h3>🖥️ Raw Infrastructure Data</h3>
                 <pre id="output"></pre>
             </div>
         </div>
     </div>
 
     <script>
+        let scoreChartInstance = null;
+
         async function startScan() {
             const target = document.getElementById('target').value;
             const btn = document.getElementById('scan-btn');
@@ -271,7 +191,7 @@
             const resultContainer = document.getElementById('result-container');
             
             const output = document.getElementById('output');
-            const scoreCircle = document.getElementById('score-circle');
+            const scoreText = document.getElementById('score-text');
             const scoreMessage = document.getElementById('score-message');
             const webOutput = document.getElementById('web-output');
             const brandOutput = document.getElementById('brand-output');
@@ -282,13 +202,10 @@
             }
 
             btn.disabled = true;
-            btn.style.opacity = "0.7";
             loader.classList.remove('hidden');
             resultContainer.classList.add('hidden');
-            
             webOutput.innerHTML = '';
             brandOutput.innerHTML = '';
-            scoreCircle.className = "score"; // Reset classes
 
             try {
                 const response = await fetch('/scan', {
@@ -303,58 +220,87 @@
                 resultContainer.classList.remove('hidden');
 
                 if (response.ok) {
-                    // Update Score
-                    scoreCircle.textContent = data.score;
+                    let color = '#ff4a4a'; 
+                    let statusClass = 'low';
+                    
                     if (data.score >= 80) {
-                        scoreCircle.classList.add('high');
-                        scoreMessage.textContent = "Excellent. Your digital storefront is highly resilient.";
+                        color = '#3fb950'; 
+                        statusClass = 'high';
+                        scoreMessage.textContent = "✅ Excellent: Your digital storefront is highly resilient.";
+                        scoreMessage.style.color = color;
                     } else if (data.score >= 50) {
-                        scoreCircle.classList.add('medium');
-                        scoreMessage.textContent = "Warning: Multiple vulnerabilities detected. Action required.";
+                        color = '#e3b341'; 
+                        statusClass = 'medium';
+                        scoreMessage.textContent = "⚠️ Warning: Multiple vulnerabilities found. Action required.";
+                        scoreMessage.style.color = color;
                     } else {
-                        scoreCircle.classList.add('low');
-                        scoreMessage.textContent = "Critical Danger: Business infrastructure is severely compromised.";
+                        scoreMessage.textContent = "🚨 Critical Danger: Business infrastructure is severely compromised.";
+                        scoreMessage.style.color = color;
                     }
 
-                    // Update Web Surface
+                    scoreText.textContent = data.score;
+                    scoreText.className = `score-overlay ${statusClass}`;
+
+                    // RENDER THE CHART
+                    renderChart(data.score, color);
+
                     data.web_surface.forEach(item => {
                         const li = document.createElement('li');
                         li.textContent = item;
-                        if(item.includes("CRITICAL")) li.style.borderLeft = "4px solid #EF4444";
-                        else if(item.includes("WARNING")) li.style.borderLeft = "4px solid #F59E0B";
-                        else if(item.includes("SUCCESS")) li.style.borderLeft = "4px solid #10B981";
+                        if(item.includes("CRITICAL")) li.className = "li-danger";
+                        else if(item.includes("WARNING")) li.className = "li-warning";
+                        else li.className = "li-success";
                         webOutput.appendChild(li);
                     });
 
-                    // Update Brand Protection
                     data.brand_protection.forEach(item => {
                         const li = document.createElement('li');
                         li.textContent = item;
-                        if(item.includes("DANGER")) li.style.borderLeft = "4px solid #EF4444";
-                        else if(item.includes("SAFE")) li.style.borderLeft = "4px solid #10B981";
+                        if(item.includes("DANGER")) li.className = "li-danger";
+                        else li.className = "li-success";
                         brandOutput.appendChild(li);
                     });
 
-                    // Update Terminal
                     output.textContent = data.nmap_results;
 
                 } else {
-                    output.textContent = `Error: ${data.error}\n${data.details || ''}`;
+                    alert(`Scan Failed: ${data.error}`);
+                    loader.classList.add('hidden');
                 }
             } catch (error) {
-                alert("Could not connect to the backend server.");
-                loader.classList.add('hidden');
+                alert("Could not connect to the scanning server. Please try again.");
+                console.error("Fetch Error:", error);
             } finally {
                 btn.disabled = false;
-                btn.style.opacity = "1";
             }
         }
+
+        function renderChart(score, colorCode) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            if (scoreChartInstance) {
+                scoreChartInstance.destroy();
+            }
+
+            scoreChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [score, 100 - score],
+                        backgroundColor: [colorCode, 'rgba(255, 255, 255, 0.05)'],
+                        borderWidth: 0,
+                        cutout: '85%',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { animateScale: true, animateRotate: true },
+                    plugins: { tooltip: { enabled: false } }
+                }
+            });
+        }
     </script>
-</body>
-</html>
-            </div>
-        </div>
-    </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
