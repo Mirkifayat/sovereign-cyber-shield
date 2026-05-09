@@ -399,6 +399,53 @@ def check_open_redirect(target):
 
 
 # ──────────────────────────────────────────────
+# GEOLOCATION
+# ──────────────────────────────────────────────
+
+def get_geo_location(target):
+    domain = clean_domain(target)
+    result = {}
+    try:
+        # Resolve domain → IP
+        ip = socket.gethostbyname(domain)
+        result['ip'] = ip
+
+        # Query ip-api.com (free, no key needed, 45 req/min)
+        r = requests.get(
+            f"http://ip-api.com/json/{ip}"
+            f"?fields=status,country,countryCode,regionName,city,"
+            f"zip,lat,lon,isp,org,as,hosting,proxy,mobile",
+            timeout=5
+        )
+        data = r.json()
+
+        if data.get('status') == 'success':
+            result['country']      = data.get('country', 'Unknown')
+            result['country_code'] = data.get('countryCode', '')
+            result['region']       = data.get('regionName', 'Unknown')
+            result['city']         = data.get('city', 'Unknown')
+            result['zip']          = data.get('zip', '')
+            result['lat']          = data.get('lat')
+            result['lon']          = data.get('lon')
+            result['isp']          = data.get('isp', 'Unknown')
+            result['org']          = data.get('org', '')
+            result['asn']          = data.get('as', '')
+            result['is_hosting']   = data.get('hosting', False)
+            result['is_proxy']     = data.get('proxy', False)
+            result['is_mobile']    = data.get('mobile', False)
+            result['error']        = None
+        else:
+            result['error'] = 'Geolocation lookup failed (private/reserved IP?).'
+
+    except socket.gaierror:
+        result['error'] = f'Could not resolve domain: {domain}'
+    except Exception as e:
+        result['error'] = f'Geolocation error: {str(e)}'
+
+    return result
+
+
+# ──────────────────────────────────────────────
 # SCORE CALCULATION (UPDATED)
 # ──────────────────────────────────────────────
 
@@ -470,6 +517,9 @@ def scan():
             return jsonify({"error": "Nmap Error", "details": result.stderr}), 500
         nmap_output = result.stdout
 
+        # ── Geolocation ─────────────────────────
+        geo_data = get_geo_location(target)
+
         # ── Category 2: Vulnerability Detection ─
         cms_findings      = detect_cms(target)
         cve_findings      = check_cve(nmap_output)
@@ -496,6 +546,7 @@ def scan():
             "cve":              cve_findings,
             "default_creds":    cred_findings,
             "open_redirect":    redirect_findings,
+            "geo":              geo_data,
             "nmap_results":     nmap_output,
         })
 
