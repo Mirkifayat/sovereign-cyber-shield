@@ -25,61 +25,41 @@ function populateList(elementId, items) {
 
 async function startScan() {
     const target = document.getElementById('target').value.trim();
-    if (!target) return alert('Please enter a business domain to scan!');
-
-    // Reset UI
+    if (!target) return alert('Enter domain');
     document.getElementById('loader').classList.remove('hidden');
     document.getElementById('result-container').classList.add('hidden');
 
     try {
-        const response = await fetch('/scan', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target })
-        });
-
+        const response = await fetch('/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ target }) });
         const data = await response.json();
         document.getElementById('loader').classList.add('hidden');
         document.getElementById('result-container').classList.remove('hidden');
 
-        // Render Score
         document.getElementById('score-text').textContent = data.score;
-        const scoreColor = data.score >= 80 ? '#3fb950' : (data.score >= 50 ? '#d29922' : '#f85149');
-        renderChart(data.score, scoreColor);
+        const color = data.score >= 80 ? '#3fb950' : (data.score >= 50 ? '#d29922' : '#f85149');
+        renderChart(data.score, color);
 
-        // Populate Modules
         populateList('web-output', data.web_surface);
         populateList('exploit-output', data.file_exploits);
+        populateList('infra-output', data.infra_intelligence);
         populateList('brand-output', data.brand_protection);
         populateList('ssl-output', data.ssl);
         populateList('dns-output', data.dns);
-        populateList('cms-output', data.cms);
-        populateList('cve-output', data.cve);
 
-        // Render Geo-Intelligence
-        document.getElementById('geo-grid').innerHTML = `
-            <div class="geo-box">IP Address: <span style="color:#58a6ff">${data.geo.ip}</span></div>
-            <div class="geo-box">Location: <span style="color:#58a6ff">${data.geo.country}</span></div>
-        `;
+        document.getElementById('geo-grid').innerHTML = `<div class="geo-box">IP: ${data.geo.ip}</div><div class="geo-box">Location: ${data.geo.country}</div>`;
 
-        // Render Action Plan (Feature: Solid Scanning Actions)
-        const roadmapList = document.getElementById('roadmap-list');
-        roadmapList.innerHTML = '';
+        const roadmap = document.getElementById('roadmap-list');
+        roadmap.innerHTML = '';
         data.roadmap.forEach(item => {
             const li = document.createElement('li');
             li.className = 'action-item-card';
             li.style.borderLeftColor = item.label === 'CRITICAL' ? '#f85149' : '#d29922';
-            li.innerHTML = `<div class="action-header" style="color:${item.label === 'CRITICAL' ? '#f85149' : '#d29922'}">[${item.label}] ${item.issue}</div><div class="action-remediation">💡 Remediation: ${item.solution}</div>`;
-            roadmapList.appendChild(li);
+            li.innerHTML = `<strong>[${item.label}] ${item.issue}</strong><br><small>💡 Solution: ${item.solution}</small>`;
+            roadmap.appendChild(li);
         });
 
         document.getElementById('output').textContent = data.nmap_results;
-
-    } catch (e) {
-        alert('Network Error. Scan might be too deep for the free server tier.');
-        document.getElementById('loader').classList.add('hidden');
-    }
+    } catch (e) { alert('Connection Error'); document.getElementById('loader').classList.add('hidden'); }
 }
 
-// Key Listener
 document.getElementById('target').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); startScan(); } });
