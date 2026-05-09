@@ -3,5 +3,3 @@ gunicorn
 requests
 dnspython
 python-whois
-urllib3
-
