@@ -21,4 +21,4 @@ EXPOSE 10000
 
 # Start the app using Gunicorn. 
 # We set the timeout to 200 seconds so the heavy Nmap vulnerability scans have time to finish!
-CMD ["gunicorn", "--timeout", "200", "app:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 200 app:app
