@@ -1,127 +1,161 @@
-let scoreChartInstance = null;
+const loaderMessages = [
+    "Checking SSL certificate...",
+    "Probing DNS security records...",
+    "Enumerating subdomains...",
+    "Scanning HTTP security headers...",
+    "Running Nmap infrastructure scan...",
+    "Detecting CMS fingerprint...",
+    "Looking up CVE database...",
+    "Testing default credentials...",
+    "Checking for open redirects...",
+    "Calculating risk score..."
+];
+
+let loaderInterval = null;
+
+function cycleLoaderText() {
+    let i = 0;
+    const el = document.getElementById('loader-text');
+    loaderInterval = setInterval(() => {
+        el.textContent = loaderMessages[i % loaderMessages.length];
+        i++;
+    }, 2200);
+}
+
+function stopLoaderText() {
+    if (loaderInterval) {
+        clearInterval(loaderInterval);
+        loaderInterval = null;
+    }
+}
+
+/**
+ * Populate a <ul> element from an array of strings.
+ * Colors items based on severity keywords.
+ */
+function populateList(elementId, items) {
+    const ul = document.getElementById(elementId);
+    ul.innerHTML = '';
+    if (!items || items.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No data returned.';
+        ul.appendChild(li);
+        return;
+    }
+    items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+
+        if (item.includes('CRITICAL') || item.includes('DANGER'))
+            li.className = 'severity-critical';
+        else if (item.includes('WARNING') || item.includes('DETECTED') || item.includes('FOUND'))
+            li.className = 'severity-warning';
+        else if (item.includes('SUCCESS') || item.includes('SAFE'))
+            li.className = 'severity-success';
+        else
+            li.className = 'severity-info';
+
+        ul.appendChild(li);
+    });
+}
 
 async function startScan() {
-    const target = document.getElementById('target').value;
+    const target = document.getElementById('target').value.trim();
     const btn = document.getElementById('scan-btn');
     const loader = document.getElementById('loader');
     const resultContainer = document.getElementById('result-container');
-    
-    // UI Elements
-    const output = document.getElementById('output');
-    const scoreText = document.getElementById('score-text');
-    const scoreMessage = document.getElementById('score-message');
-    const webOutput = document.getElementById('web-output');
-    const brandOutput = document.getElementById('brand-output');
 
     if (!target) {
-        alert("Please enter a target domain!");
+        alert('Please enter a domain to scan!');
         return;
     }
 
-    // Reset UI
     btn.disabled = true;
     loader.classList.remove('hidden');
     resultContainer.classList.add('hidden');
-    webOutput.innerHTML = '';
-    brandOutput.innerHTML = '';
+    cycleLoaderText();
+
+    // Clear all outputs
+    const allOutputs = [
+        'web-output', 'brand-output', 'ssl-output', 'dns-output',
+        'subdomain-output', 'whois-output', 'header-output',
+        'cms-output', 'cve-output', 'cred-output', 'redirect-output', 'output'
+    ];
+    allOutputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
 
     try {
         const response = await fetch('/scan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target: target })
+            body: JSON.stringify({ target })
         });
 
         const data = await response.json();
 
+        stopLoaderText();
         loader.classList.add('hidden');
         resultContainer.classList.remove('hidden');
 
-        if (response.ok) {
-            // 1. Determine Score Color & Message
-            let color = '#ff4a4a'; // Default Red
-            let statusClass = 'low';
-            
-            if (data.score >= 80) {
-                color = '#3fb950'; // Green
-                statusClass = 'high';
-                scoreMessage.textContent = "✅ Excellent: Your digital storefront is highly resilient.";
-                scoreMessage.style.color = color;
-            } else if (data.score >= 50) {
-                color = '#e3b341'; // Yellow
-                statusClass = 'medium';
-                scoreMessage.textContent = "⚠️ Warning: Multiple vulnerabilities found. Action required.";
-                scoreMessage.style.color = color;
-            } else {
-                scoreMessage.textContent = "🚨 Critical Danger: Business infrastructure is severely compromised.";
-                scoreMessage.style.color = color;
-            }
-
-            scoreText.textContent = data.score;
-            scoreText.className = `score-overlay ${statusClass}`;
-
-            // 2. Render Chart.js
-            renderChart(data.score, color);
-
-            // 3. Populate Web Surface List with Custom Styling
-            data.web_surface.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                if(item.includes("CRITICAL")) li.className = "li-danger";
-                else if(item.includes("WARNING")) li.className = "li-warning";
-                else li.className = "li-success";
-                webOutput.appendChild(li);
-            });
-
-            // 4. Populate Brand Protection List
-            data.brand_protection.forEach(item => {
-                const li = document.createElement('li');
-                li.textContent = item;
-                if(item.includes("DANGER")) li.className = "li-danger";
-                else li.className = "li-success";
-                brandOutput.appendChild(li);
-            });
-
-            // 5. Update Raw Terminal Output
-            output.textContent = data.nmap_results;
-
-        } else {
-            alert(`Scan Failed: ${data.error}`);
-            loader.classList.add('hidden');
-            btn.disabled = false;
+        if (!response.ok) {
+            document.getElementById('output').textContent =
+                `Error: ${data.error}\n${data.details || ''}`;
+            return;
         }
-    } catch (error) {
-        alert("Could not connect to the scanning server. Please try again.");
+
+        // ── Score ────────────────────────────────────────
+        const scoreCircle = document.getElementById('score-circle');
+        const scoreMessage = document.getElementById('score-message');
+
+        scoreCircle.textContent = `${data.score}/100`;
+        scoreCircle.className = 'score';
+
+        if (data.score >= 80) {
+            scoreCircle.classList.add('high');
+            scoreMessage.textContent = 'Great! Your digital storefront is highly resilient.';
+        } else if (data.score >= 50) {
+            scoreCircle.classList.add('medium');
+            scoreMessage.textContent = 'Warning: Multiple vulnerabilities found. Action required.';
+        } else {
+            scoreCircle.classList.add('low');
+            scoreMessage.textContent = 'Critical Danger: Business infrastructure is severely compromised.';
+        }
+
+        // ── Original features ────────────────────────────
+        populateList('web-output',   data.web_surface);
+        populateList('brand-output', data.brand_protection);
+
+        // ── Scanning & Recon ─────────────────────────────
+        populateList('ssl-output',       data.ssl);
+        populateList('dns-output',       data.dns);
+        populateList('subdomain-output', data.subdomains);
+        populateList('whois-output',     data.whois);
+        populateList('header-output',    data.http_headers);
+
+        // ── Vulnerability Detection ──────────────────────
+        populateList('cms-output',      data.cms);
+        populateList('cve-output',      data.cve);
+        populateList('cred-output',     data.default_creds);
+        populateList('redirect-output', data.open_redirect);
+
+        // ── Raw Nmap ─────────────────────────────────────
+        document.getElementById('output').textContent = data.nmap_results;
+
+    } catch (err) {
+        stopLoaderText();
+        loader.classList.add('hidden');
+        alert('Could not connect to the backend server. Is Flask running?');
+        console.error(err);
     } finally {
         btn.disabled = false;
     }
 }
 
-// Function to draw and update the Chart.js Donut Chart
-function renderChart(score, colorCode) {
-    const ctx = document.getElementById('scoreChart').getContext('2d');
-    
-    // Destroy previous chart if it exists so we can draw a new one
-    if (scoreChartInstance) {
-        scoreChartInstance.destroy();
-    }
-
-    scoreChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [score, 100 - score],
-                backgroundColor: [colorCode, 'rgba(255, 255, 255, 0.1)'],
-                borderWidth: 0,
-                cutout: '80%',
-                borderRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { animateScale: true, animateRotate: true },
-            plugins: { tooltip: { enabled: false } }
-        }
+// Allow pressing Enter to trigger scan
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('target').addEventListener('keydown', e => {
+        if (e.key === 'Enter') startScan();
     });
-}
+});
