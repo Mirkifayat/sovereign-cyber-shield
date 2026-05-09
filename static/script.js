@@ -140,6 +140,9 @@ async function startScan() {
         populateList('cred-output',     data.default_creds);
         populateList('redirect-output', data.open_redirect);
 
+        // ── Geo location ─────────────────────────────────
+        renderGeo(data.geo);
+
         // ── Raw Nmap ─────────────────────────────────────
         document.getElementById('output').textContent = data.nmap_results;
 
@@ -159,3 +162,59 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') startScan();
     });
 });
+
+function renderGeo(geo) {
+    if (!geo) return;
+
+    const flagEl    = document.getElementById('geo-flag');
+    const titleEl   = document.getElementById('geo-title');
+    const locationEl= document.getElementById('geo-location');
+    const ipEl      = document.getElementById('geo-ip');
+    const ispEl     = document.getElementById('geo-isp');
+    const asnEl     = document.getElementById('geo-asn');
+    const tagsEl    = document.getElementById('geo-tags');
+    const mapLink   = document.getElementById('geo-map-link');
+
+    if (geo.error) {
+        locationEl.textContent = geo.error;
+        return;
+    }
+
+    // Country flag emoji from country code
+    const flag = geo.country_code
+        ? geo.country_code.toUpperCase().replace(/./g,
+            c => String.fromCodePoint(127397 + c.charCodeAt(0)))
+        : '🌐';
+
+    flagEl.textContent   = flag;
+    titleEl.textContent  = `Server Location — ${geo.country || 'Unknown'}`;
+    locationEl.textContent = [geo.city, geo.region, geo.country]
+        .filter(Boolean).join(', ');
+
+    ipEl.textContent  = `IP: ${geo.ip  || '—'}`;
+    ispEl.textContent = `ISP: ${geo.isp || '—'}`;
+    asnEl.textContent = `ASN: ${geo.asn || '—'}`;
+
+    // Risk tags
+    tagsEl.innerHTML = '';
+    if (geo.is_proxy)   addTag(tagsEl, '⚠️ Proxy/VPN Detected',  'tag-warn');
+    if (geo.is_hosting) addTag(tagsEl, '🖥️ Hosted on Datacenter', 'tag-info');
+    if (geo.is_mobile)  addTag(tagsEl, '📱 Mobile Network',        'tag-info');
+    if (!geo.is_proxy && !geo.is_hosting && !geo.is_mobile)
+        addTag(tagsEl, '✅ Residential / Clean IP', 'tag-ok');
+
+    // Map link
+    if (geo.lat && geo.lon) {
+        mapLink.href = `https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lon}&zoom=10`;
+        mapLink.style.display = 'inline-block';
+    } else {
+        mapLink.style.display = 'none';
+    }
+}
+
+function addTag(parent, text, cls) {
+    const span = document.createElement('span');
+    span.className = `geo-tag ${cls}`;
+    span.textContent = text;
+    parent.appendChild(span);
+}
