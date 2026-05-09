@@ -6,8 +6,12 @@ import shutil
 import requests
 import socket
 import urllib3
-app = Flask(__name__)
+import warnings # <-- Bring in the sledgehammer
 
+# Forcefully ignore the specific InsecureRequestWarning globally
+warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
+app = Flask(__name__)
 def get_nmap_path():
     path = shutil.which("nmap")
     return path if path else "/usr/bin/nmap"
