@@ -3,406 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberShield Kashmir | Free Security Scanner for MSMEs</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>Sovereign Cyber-Shield | Future-Proofing Kashmir</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<!-- ══════════════════════════════════════
-     NAVBAR
-══════════════════════════════════════ -->
-<nav class="navbar">
-    <div class="nav-inner">
-        <div class="nav-brand">
-            <span class="brand-shield">⬡</span>
-            <span class="brand-name">Cyber<em>Shield</em></span>
-            <span class="brand-tag">Kashmir</span>
+    <nav class="navbar">
+        <div class="nav-inner">
+            <div class="nav-brand">Sovereign <span>Cyber-Shield</span></div>
+            <a class="nav-cta" href="#" onclick="document.getElementById('target').focus(); return false;">Scan My Business</a>
         </div>
-        <div class="nav-links">
-            <a href="#how">How it works</a>
-            <a href="#checks">What we check</a>
-        </div>
-    </div>
-</nav>
+    </nav>
 
-<!-- ══════════════════════════════════════
-     HERO — SCAN BOX
-══════════════════════════════════════ -->
-<section class="hero">
-    <div class="hero-bg-grid"></div>
-    <div class="hero-glow"></div>
+    <section class="hero">
+        <div class="lp-container">
+            <p class="lp-label">Made for Kashmir's businesses</p>
+            <h1 class="hero-title">Protect your business.<br>Know your <span>cyber risk</span> in minutes.</h1>
+            <p class="hero-sub" style="margin: 0 auto 30px auto;">Sovereign Cyber-Shield scans your website for open vulnerabilities, brand impersonation, and infrastructure threats — giving you a plain-English action plan to fix them.</p>
+            
+            <div class="search-box">
+                <input type="text" id="target" placeholder="Enter your domain (e.g., scanme.nmap.org)" autocomplete="off">
+                <button id="scan-btn" onclick="startScan()">Analyze Business Risk</button>
+            </div>
 
-    <div class="hero-inner">
-        <div class="hero-eyebrow">
-            <span class="pulse-dot"></span>
-            Free · No signup · Results in 60 seconds
-        </div>
+            <div id="loader" class="hidden loader-container">
+                <div class="spinner"></div>
+                <p id="loader-text" class="loader-text">Initializing scanning engine...</p>
+            </div>
 
-        <h1 class="hero-title">
-            Is your business<br>
-            <span class="hero-title-accent">safe online?</span>
-        </h1>
-
-        <p class="hero-subtitle">
-            Built for Kashmir's shops, travel agencies, handicraft exporters, and every MSME with a website.
-            One scan. Ten security checks. Zero technical knowledge needed.
-        </p>
-
-        <!-- SCAN BOX -->
-        <div class="scan-box" id="scan-box">
-            <div class="scan-box-label">Enter your business website</div>
-            <div class="scan-input-row">
-                <div class="scan-input-wrap">
-                    <span class="scan-input-icon">🌐</span>
-                    <input type="text" id="target"
-                           placeholder="yourbusiness.com"
-                           autocomplete="off" spellcheck="false">
+            <div id="result-container" class="hidden dashboard">
+                <div class="card score-card">
+                    <h2>Cyber-Resilience Score</h2>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                        <div id="score-text" class="score-overlay">--</div>
+                    </div>
+                    <p id="score-message"></p>
                 </div>
-                <button id="scan-btn" onclick="startScan()">
-                    Scan Now →
-                </button>
-            </div>
-            <div class="scan-examples">
-                Try: <button class="ex-btn" onclick="fillExample('example.com')">example.com</button>
-                     <button class="ex-btn" onclick="fillExample('kashmircraft.com')">kashmircraft.com</button>
-            </div>
-        </div>
 
-        <!-- TRUST STRIP -->
-        <div class="trust-strip">
-            <div class="trust-item">✓ No data stored</div>
-            <div class="trust-divider"></div>
-            <div class="trust-item">✓ 10 security checks</div>
-            <div class="trust-divider"></div>
-            <div class="trust-item">✓ Defensive use only</div>
-            <div class="trust-divider"></div>
-            <div class="trust-item">✓ 100% free</div>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════════════════════════════════
-     LOADER
-══════════════════════════════════════ -->
-<div id="loader" class="loader-section hidden">
-    <div class="loader-inner">
-        <div class="loader-ring">
-            <div class="loader-ring-fill"></div>
-            <div class="loader-icon">⬡</div>
-        </div>
-        <div class="loader-domain" id="loader-domain">scanning...</div>
-        <div class="loader-step" id="loader-text">Initialising scan engine...</div>
-        <div class="loader-steps-track">
-            <div class="loader-progress-bar" id="loader-bar"></div>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════
-     RESULTS
-══════════════════════════════════════ -->
-<div id="result-container" class="hidden results-wrapper">
-
-    <!-- Score Hero -->
-    <div class="score-hero">
-        <div class="score-hero-inner">
-            <div class="score-ring-wrap">
-                <svg class="score-svg" viewBox="0 0 120 120">
-                    <circle class="score-track" cx="60" cy="60" r="52"/>
-                    <circle class="score-fill" id="score-arc" cx="60" cy="60" r="52"
-                            stroke-dasharray="327" stroke-dashoffset="327"/>
-                </svg>
-                <div class="score-center">
-                    <div class="score-number" id="score-circle">--</div>
-                    <div class="score-label">/ 100</div>
+                <div class="card roadmap-card hidden" id="roadmap-card">
+                    <div class="roadmap-header">
+                        <span style="font-size: 1.2rem; font-weight: bold; color: #fff;">🗺️ Roadmap to Recovery</span>
+                        <span class="roadmap-sub">Fix these issues first — sorted by severity</span>
+                    </div>
+                    <ul id="roadmap-list" class="roadmap-list"></ul>
                 </div>
-            </div>
-            <div class="score-info">
-                <div class="score-title">Cyber-Resilience Score</div>
-                <div class="score-verdict" id="score-message"></div>
-                <div class="score-legend">
-                    <span class="legend-dot high"></span>80–100 Resilient
-                    <span class="legend-dot mid"></span>50–79 At risk
-                    <span class="legend-dot low"></span>0–49 Critical
+
+                <div class="card geo-card" id="geo-card">
+                    <div class="geo-flag" id="geo-flag">🌐</div>
+                    <div class="geo-details">
+                        <div class="geo-title" id="geo-title">Server Location</div>
+                        <div class="geo-location" id="geo-location">—</div>
+                        <div class="geo-meta-row">
+                            <span class="geo-meta" id="geo-ip">IP: —</span>
+                            <span class="geo-meta" id="geo-isp">ISP: —</span>
+                            <span class="geo-meta" id="geo-asn">ASN: —</span>
+                        </div>
+                        <div class="geo-tags" id="geo-tags"></div>
+                    </div>
+                    <a class="geo-map-link" id="geo-map-link" target="_blank" rel="noopener">📍 View on Map</a>
+                </div>
+
+                <div class="section-label">🔎 Attack Surface</div>
+                <div class="modules">
+                    <div class="module-card"><h3>🌐 Web-Surface Exposures</h3><ul id="web-output"></ul></div>
+                    <div class="module-card"><h3>🛡️ Brand Impersonation</h3><ul id="brand-output"></ul></div>
+                </div>
+
+                <div class="section-label">📡 Scanning & Reconnaissance</div>
+                <div class="modules">
+                    <div class="module-card"><h3>🔒 SSL / TLS Certificate</h3><ul id="ssl-output"></ul></div>
+                    <div class="module-card"><h3>📧 DNS Security</h3><ul id="dns-output"></ul></div>
+                </div>
+                <div class="modules">
+                    <div class="module-card"><h3>🌍 Subdomains</h3><ul id="subdomain-output"></ul></div>
+                    <div class="module-card"><h3>📋 WHOIS Data</h3><ul id="whois-output"></ul></div>
+                </div>
+                <div class="modules single">
+                    <div class="module-card full-width"><h3>🧱 HTTP Security Headers</h3><ul id="header-output"></ul></div>
+                </div>
+
+                <div class="section-label">🦠 Vulnerability Detection</div>
+                <div class="modules">
+                    <div class="module-card"><h3>🏗️ CMS Detection</h3><ul id="cms-output"></ul></div>
+                    <div class="module-card"><h3>🔑 Default Credentials</h3><ul id="cred-output"></ul></div>
+                </div>
+                <div class="modules">
+                    <div class="module-card"><h3>🔗 Open Redirects</h3><ul id="redirect-output"></ul></div>
+                    <div class="module-card"><h3>💀 CVE Exploits</h3><ul id="cve-output"></ul></div>
+                </div>
+
+                <div class="card terminal-card">
+                    <h3>🖥️ Raw Infrastructure Data (Nmap)</h3>
+                    <pre id="output"></pre>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="results-grid-wrap">
-
-        <!-- Roadmap -->
-        <div class="roadmap-card hidden" id="roadmap-card">
-            <div class="section-header">
-                <span class="section-icon">🗺</span>
-                <div>
-                    <div class="section-title">Roadmap to Recovery</div>
-                    <div class="section-sub">Fix these issues first — sorted by severity</div>
-                </div>
-            </div>
-            <ol id="roadmap-list" class="roadmap-list"></ol>
-        </div>
-
-        <!-- Geo Card -->
-        <div class="geo-card" id="geo-card">
-            <div class="geo-header">
-                <span class="geo-flag-lg" id="geo-flag">🌐</span>
-                <div>
-                    <div class="geo-title" id="geo-title">Server Location</div>
-                    <div class="geo-location" id="geo-location">—</div>
-                </div>
-                <a class="geo-map-link" id="geo-map-link" target="_blank" rel="noopener">📍 Map</a>
-            </div>
-            <div class="geo-meta-row">
-                <div class="geo-meta-item" id="geo-ip">IP —</div>
-                <div class="geo-meta-item" id="geo-isp">ISP —</div>
-                <div class="geo-meta-item" id="geo-asn">ASN —</div>
-            </div>
-            <div class="geo-tags" id="geo-tags"></div>
-        </div>
-
-        <!-- ── Attack Surface ────────────────── -->
-        <div class="results-section-label">🔎 Attack Surface</div>
-        <div class="module-grid">
-            <div class="module-card">
-                <div class="module-header">
-                    <span class="module-icon">🌐</span>
-                    <span>Web Surface Exposures</span>
-                </div>
-                <ul id="web-output" class="finding-list"></ul>
-            </div>
-            <div class="module-card">
-                <div class="module-header">
-                    <span class="module-icon">🛡️</span>
-                    <span>Brand Impersonation</span>
-                </div>
-                <ul id="brand-output" class="finding-list"></ul>
+    <section class="lp-section bg-alt">
+        <div class="lp-container">
+            <p class="lp-label">Why it matters</p>
+            <h2 class="lp-heading">MSMEs are the #1 target of cybercrime</h2>
+            <div class="stat-grid">
+                <div class="stat-card"><div class="stat-num">43%</div><div class="stat-label">of cyberattacks target small businesses</div></div>
+                <div class="stat-card"><div class="stat-num">₹6.5L</div><div class="stat-label">average cost of a data breach for an SME in India</div></div>
+                <div class="stat-card"><div class="stat-num">60%</div><div class="stat-label">of small businesses close within 6 months of an attack</div></div>
             </div>
         </div>
+    </section>
 
-        <!-- ── Scanning & Recon ──────────────── -->
-        <div class="results-section-label">📡 Scanning & Reconnaissance</div>
-        <div class="module-grid">
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🔒</span><span>SSL / TLS Certificate</span></div>
-                <ul id="ssl-output" class="finding-list"></ul>
-            </div>
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">📧</span><span>DNS Security (SPF / DMARC / DKIM)</span></div>
-                <ul id="dns-output" class="finding-list"></ul>
-            </div>
+    <footer class="site-footer">
+        <div class="lp-container">
+            <p class="footer-brand">Sovereign <span>Cyber-Shield</span></p>
+            <p class="footer-tagline">Future-Proofing Kashmiri Businesses with Technology</p>
         </div>
-        <div class="module-grid">
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🌍</span><span>Subdomain Enumeration</span></div>
-                <ul id="subdomain-output" class="finding-list"></ul>
-            </div>
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">📋</span><span>WHOIS / Domain Info</span></div>
-                <ul id="whois-output" class="finding-list"></ul>
-            </div>
-        </div>
-        <div class="module-grid single">
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🧱</span><span>HTTP Security Headers</span></div>
-                <ul id="header-output" class="finding-list two-col"></ul>
-            </div>
-        </div>
+    </footer>
 
-        <!-- ── Vulnerability Detection ──────── -->
-        <div class="results-section-label">🦠 Vulnerability Detection</div>
-        <div class="module-grid">
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🏗️</span><span>CMS Detection</span></div>
-                <ul id="cms-output" class="finding-list"></ul>
-            </div>
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🔑</span><span>Default Credentials</span></div>
-                <ul id="cred-output" class="finding-list"></ul>
-            </div>
-        </div>
-        <div class="module-grid">
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">🔗</span><span>Open Redirect Check</span></div>
-                <ul id="redirect-output" class="finding-list"></ul>
-            </div>
-            <div class="module-card">
-                <div class="module-header"><span class="module-icon">💀</span><span>CVE / Known Exploits</span></div>
-                <ul id="cve-output" class="finding-list"></ul>
-            </div>
-        </div>
-
-        <!-- ── Raw Nmap ──────────────────────── -->
-        <div class="terminal-card">
-            <div class="terminal-header">
-                <span class="terminal-dot red"></span>
-                <span class="terminal-dot yellow"></span>
-                <span class="terminal-dot green"></span>
-                <span class="terminal-title">Raw Infrastructure Data — For IT / Developers</span>
-            </div>
-            <pre id="output" class="terminal-body"></pre>
-        </div>
-
-    </div><!-- /results-grid-wrap -->
-</div><!-- /result-container -->
-
-<!-- ══════════════════════════════════════
-     LANDING SECTIONS
-══════════════════════════════════════ -->
-
-<!-- WHY IT MATTERS -->
-<section class="lp-section" id="why">
-    <div class="lp-container">
-        <div class="section-eyebrow">Why it matters</div>
-        <h2 class="lp-heading">MSMEs are the <span class="accent">#1 target</span> of cybercrime</h2>
-        <p class="lp-sub">43% of all cyberattacks globally hit small businesses — yet most have zero security monitoring in place.</p>
-
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-num">43%</div>
-                <div class="stat-label">of cyberattacks target small businesses</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num">₹6.5L</div>
-                <div class="stat-label">average cost of a data breach for an SME in India</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num">60%</div>
-                <div class="stat-label">of small businesses close within 6 months of an attack</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-num">72hr</div>
-                <div class="stat-label">average time before a breach is even detected</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section class="lp-section lp-alt" id="how">
-    <div class="lp-container">
-        <div class="section-eyebrow">How it works</div>
-        <h2 class="lp-heading">Three steps. <span class="accent">No setup.</span></h2>
-        <p class="lp-sub">You don't need to know what an IP address is.</p>
-
-        <div class="steps">
-            <div class="step">
-                <div class="step-num">01</div>
-                <div class="step-body">
-                    <div class="step-title">Enter your domain</div>
-                    <div class="step-desc">Type your website like <code>yourbusiness.com</code> in the scan box above. No account needed.</div>
-                </div>
-            </div>
-            <div class="step-arrow">→</div>
-            <div class="step">
-                <div class="step-num">02</div>
-                <div class="step-body">
-                    <div class="step-title">We run 10 checks</div>
-                    <div class="step-desc">SSL, DNS, open ports, exposed files, brand lookalikes, CVEs, server location — all under 60 seconds.</div>
-                </div>
-            </div>
-            <div class="step-arrow">→</div>
-            <div class="step">
-                <div class="step-num">03</div>
-                <div class="step-body">
-                    <div class="step-title">Get your score & action plan</div>
-                    <div class="step-desc">A score from 0–100 shows your risk level. If below 80, you get a ranked list of exactly what to fix.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- WHAT WE CHECK -->
-<section class="lp-section" id="checks">
-    <div class="lp-container">
-        <div class="section-eyebrow">What we check</div>
-        <h2 class="lp-heading">10 threat checks. <span class="accent">One scan.</span></h2>
-        <p class="lp-sub">A full-spectrum check across your domain's infrastructure, security posture, and brand exposure.</p>
-
-        <div class="checks-grid">
-            <div class="check-card"><span class="check-icon">🔒</span><div class="check-title">SSL Certificate Health</div><div class="check-desc">Checks if your HTTPS certificate is valid and alerts before it expires.</div></div>
-            <div class="check-card"><span class="check-icon">📧</span><div class="check-title">Email Security (DNS)</div><div class="check-desc">Verifies SPF, DMARC & DKIM so attackers can't send fake emails as your business.</div></div>
-            <div class="check-card"><span class="check-icon">🌐</span><div class="check-title">Web Surface Exposure</div><div class="check-desc">Detects accidentally exposed files like <code>.env</code>, <code>.git</code> configs, and admin backups.</div></div>
-            <div class="check-card"><span class="check-icon">🛡️</span><div class="check-title">Brand Impersonation</div><div class="check-desc">Alerts you if look-alike domains are registered to trick your customers.</div></div>
-            <div class="check-card"><span class="check-icon">📍</span><div class="check-title">Server Geolocation</div><div class="check-desc">Shows where your server is physically and flags proxy or datacenter IPs.</div></div>
-            <div class="check-card"><span class="check-icon">💀</span><div class="check-title">CVE Vulnerability Check</div><div class="check-desc">Matches your services against the NIST global database of known exploits.</div></div>
-            <div class="check-card"><span class="check-icon">🧱</span><div class="check-title">HTTP Security Headers</div><div class="check-desc">Checks 6 critical browser security headers protecting your visitors.</div></div>
-            <div class="check-card"><span class="check-icon">🏗️</span><div class="check-title">CMS Detection</div><div class="check-desc">Identifies if your site runs WordPress, Joomla, or Drupal and flags known vulnerabilities.</div></div>
-            <div class="check-card"><span class="check-icon">🔑</span><div class="check-title">Default Credentials</div><div class="check-desc">Tests whether admin panels use common default passwords attackers already know.</div></div>
-            <div class="check-card"><span class="check-icon">🌍</span><div class="check-title">Subdomain Enumeration</div><div class="check-desc">Discovers hidden subdomains like dev, staging, and api that may be unprotected.</div></div>
-        </div>
-    </div>
-</section>
-
-<!-- SCORE GUIDE -->
-<section class="lp-section lp-alt">
-    <div class="lp-container">
-        <div class="section-eyebrow">Understanding your score</div>
-        <h2 class="lp-heading">What your score <span class="accent">means</span></h2>
-        <p class="lp-sub">Calculated as <strong>Σ(Vulnerability × Severity) / Total Checks</strong> — the same standard used by enterprise security teams.</p>
-
-        <div class="score-guide-grid">
-            <div class="score-guide-card high">
-                <div class="sgc-range">80 – 100</div>
-                <div class="sgc-tag">✅ Highly Resilient</div>
-                <div class="sgc-desc">Your digital storefront is well-protected. Scan regularly to stay ahead of new threats.</div>
-            </div>
-            <div class="score-guide-card mid">
-                <div class="sgc-range">50 – 79</div>
-                <div class="sgc-tag">⚠️ Action Required</div>
-                <div class="sgc-desc">Multiple vulnerabilities found. Use the Roadmap to fix the highest-risk issues first.</div>
-            </div>
-            <div class="score-guide-card low">
-                <div class="sgc-range">0 – 49</div>
-                <div class="sgc-tag">🚨 Critical Danger</div>
-                <div class="sgc-desc">Your infrastructure is severely exposed. Immediate action needed to prevent data loss.</div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section class="lp-section">
-    <div class="lp-container">
-        <div class="section-eyebrow">Built for you</div>
-        <h2 class="lp-heading">Designed for <span class="accent">Kashmiri businesses</span></h2>
-        <p class="lp-sub">Whether you sell handicrafts, run a travel agency, or operate a local service — if you have a website, you have risk.</p>
-
-        <div class="testimonial-grid">
-            <div class="testimonial-card">
-                <div class="testimonial-quote">"</div>
-                <p class="testimonial-text">I didn't know my website had an exposed .env file with my database password until this tool found it. Took 5 minutes to fix what could have cost me everything.</p>
-                <p class="testimonial-attr">— E-commerce business owner, Srinagar</p>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-quote">"</div>
-                <p class="testimonial-text">Someone registered a fake version of my domain to trick my customers into sending payments elsewhere. The brand protection check caught it immediately.</p>
-                <p class="testimonial-attr">— Handicraft exporter, Kashmir Valley</p>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-quote">"</div>
-                <p class="testimonial-text">My SSL certificate had expired and I had no idea. Customers were seeing a security warning and leaving. This tool alerted me before it could happen again.</p>
-                <p class="testimonial-attr">— Travel agency owner, Gulmarg</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="site-footer">
-    <div class="lp-container">
-        <div class="footer-brand">
-            <span class="brand-shield">⬡</span>
-            Cyber<em>Shield</em> Kashmir
-        </div>
-        <p class="footer-tagline">Future-Proofing Kashmiri Businesses with Technology</p>
-        <p class="footer-note">No data is stored. Scans are for defensive security purposes only.<br>A non-commercial initiative to protect Kashmir's digital economy.</p>
-    </div>
-</footer>
-
-<script src="script.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
