@@ -11,10 +11,8 @@ import warnings
 # Forcefully ignore the specific InsecureRequestWarning globally
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
-# --- ADD THIS LINE: Stop DNS lookups from freezing the server ---
-socket.setdefaulttimeout(3)
-
 app = Flask(__name__)
+
 def get_nmap_path():
     path = shutil.which("nmap")
     return path if path else "/usr/bin/nmap"
@@ -23,12 +21,11 @@ def is_safe_input(target):
     pattern = r"^[a-zA-Z0-9.-]+$"
     return re.match(pattern, target)
 
-# --- NEW FEATURE 1: Web Surface Crawler ---
+# --- FEATURE 1: Web Surface Crawler ---
 def check_web_surface(target):
     findings = []
     sensitive_paths = ['/.env', '/.git/config', '/admin/', '/wp-config.php.bak']
     
-    # Ensure target has protocol
     base_url = f"http://{target}" if not target.startswith('http') else target
     
     for path in sensitive_paths:
@@ -46,53 +43,61 @@ def check_web_surface(target):
         findings.append("SUCCESS: No common sensitive files exposed.")
     return findings
 
-# --- NEW FEATURE 2: Brand Protection (Typosquatting) ---
+# --- FEATURE 2: Brand Protection (Typosquatting) ---
 def check_typosquatting(domain):
-    # Strip protocol if present
     domain = domain.replace("http://", "").replace("https://", "").split("/")[0]
     
     if domain.count('.') == 0:
-        return ["N/A: Please enter a valid domain (e.g., example.com) to check brand protection."]
+        return ["N/A: Please enter a valid domain to check brand protection."]
 
     base, tld = domain.rsplit('.', 1)
     impersonations = []
     
-    # Generate simple typos (e.g., replacing 'i' with '1', 'o' with '0')
     typos = []
     if 'i' in base: typos.append(base.replace('i', '1') + f".{tld}")
     if 'o' in base: typos.append(base.replace('o', '0') + f".{tld}")
-    typos.append(base + f"s.{tld}") # Plural addition
+    typos.append(base + f"s.{tld}") 
     
     for typo in typos:
         try:
             socket.gethostbyname(typo)
             impersonations.append(f"DANGER: {typo} is registered! Someone might be impersonating your brand.")
-        except socket.gaierror:
+        except socket.error:
             impersonations.append(f"SAFE: {typo} is not registered.")
             
     return impersonations
 
-# --- NEW FEATURE 3: Cyber-Resilience Score ---
+# --- NEW FEATURE 3: Server Geo-Intelligence ---
+def get_server_info(domain):
+    try:
+        clean_domain = domain.replace("http://", "").replace("https://", "").split("/")[0]
+        target_ip = socket.gethostbyname(clean_domain)
+        
+        # Fetch location data from a free IP API
+        res = requests.get(f"http://ip-api.com/json/{target_ip}", timeout=3)
+        if res.status_code == 200:
+            data = res.json()
+            return {
+                "ip": target_ip,
+                "country": data.get("country", "Unknown"),
+                "isp": data.get("isp", "Unknown")
+            }
+    except Exception:
+        pass
+    
+    return {"ip": "Unknown", "country": "Unknown", "isp": "Unknown"}
+
+# --- FEATURE 4: Cyber-Resilience Score ---
 def calculate_score(nmap_output, web_findings, typo_findings):
     score = 100
-    
-    # Deduct for open ports found in Nmap
     open_ports = len(re.findall(r"open", nmap_output, re.IGNORECASE))
     score -= (open_ports * 5)
-    
-    # Deduct for critical web exposures
     for finding in web_findings:
-        if "CRITICAL" in finding:
-            score -= 30
-        elif "WARNING" in finding:
-            score -= 10
-            
-    # Deduct for brand risks
+        if "CRITICAL" in finding: score -= 30
+        elif "WARNING" in finding: score -= 10
     for finding in typo_findings:
-        if "DANGER" in finding:
-            score -= 15
-            
-    return max(0, score) # Score cannot drop below 0
+        if "DANGER" in finding: score -= 15
+    return max(0, score) 
 
 @app.route('/')
 def index():
@@ -107,13 +112,12 @@ def scan():
         return jsonify({"error": "Invalid or unsafe target input"}), 400
 
     try:
-        # 1. Run Web Surface Check
+        # Run all modules
         web_findings = check_web_surface(target)
-        
-        # 2. Run Brand Protection Check
         typo_findings = check_typosquatting(target)
-
-        # 3. Run Nmap Infrastructure Check
+        server_info = get_server_info(target) # NEW DATA FETCHED HERE
+        
+        # Run Nmap Infrastructure Check
         nmap_path = get_nmap_path()
         command = [nmap_path, "-sT", "-F", "-Pn", "-T5", "--max-retries", "1", target]
         result = subprocess.run(command, capture_output=True, text=True, timeout=150)
@@ -122,15 +126,14 @@ def scan():
              return jsonify({"error": "Nmap Error", "details": result.stderr}), 500
              
         nmap_output = result.stdout
-
-        # 4. Calculate Final Risk Score
         risk_score = calculate_score(nmap_output, web_findings, typo_findings)
 
-        # Return the aggregated intelligence
+        # Return everything to the frontend
         return jsonify({
             "score": risk_score,
             "web_surface": web_findings,
             "brand_protection": typo_findings,
+            "server_data": server_info, # NEW DATA SENT HERE
             "nmap_results": nmap_output
         })
             
